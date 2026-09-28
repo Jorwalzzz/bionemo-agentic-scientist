@@ -1,4 +1,7 @@
 """Unit tests for macromolecular PDB parsing and sequence validation."""
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import pytest
 from src.pdb_utils import validate_sequence, clean_pdb_structure, extract_sequence_from_pdb, fetch_pdb_online_or_mock
 

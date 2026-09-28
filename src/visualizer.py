@@ -31,12 +31,18 @@ def plot_pareto_frontier(
 ):
     """Renders 300 DPI multi-objective Pareto scatter plot."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    fig, ax = plt.subplots(figsize=(10, 7))
     
     docked = [c for c in candidates if c.binding_affinity < 0]
     if not docked:
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.text(0.5, 0.5, f"No Valid Docked Leads for {target.name}", 
+                ha="center", va="center", fontsize=14, color="#64748b", fontweight="bold")
+        ax.set_axis_off()
+        fig.savefig(output_path, dpi=300)
+        plt.close(fig)
         return
-        
+
+    fig, ax = plt.subplots(figsize=(10, 7))
     x = [c.binding_affinity for c in docked]
     y = [c.qed for c in docked]
     
@@ -80,10 +86,11 @@ def plot_pareto_frontier(
     ax.set_ylabel("Drug-Likeness Quantitative Estimate (QED, 0 to 1)", fontweight="bold")
     ax.set_title(f"Agentic BioNeMo: Multi-Objective Lead Frontier for {target.name} ({target.pdb_id})\nNVIDIA NIM MolMIM Latent Exploration + DiffDock Molecular Docking", pad=15)
     
-    # Add Superior Candidate Zone shading
-    min_x = min(x) - 0.5
-    max_y = max(y) + 0.05
-    ax.axvspan(min_x, -7.5, ymin=0.45, ymax=1.0, color="#d1fae5", alpha=0.35, label="Optimal Clinical Lead Zone")
+    # Safely add Superior Candidate Zone shading
+    zone_min = min(x) - 0.5
+    zone_max = min(max(x), -7.0)
+    if zone_min < zone_max:
+        ax.axvspan(zone_min, zone_max, ymin=0.45, ymax=1.0, color="#d1fae5", alpha=0.35, label="Optimal Clinical Lead Zone")
     
     # Custom Legend
     from matplotlib.lines import Line2D
@@ -122,3 +129,10 @@ def plot_chemical_leads_grid(
             useSVG=False
         )
         img.save(output_path)
+    else:
+        fig, ax = plt.subplots(figsize=(6, 3))
+        ax.text(0.5, 0.5, "No Chemical Scaffolds Available for Grid View", 
+                ha="center", va="center", fontsize=12, color="#64748b", fontweight="bold")
+        ax.set_axis_off()
+        fig.savefig(output_path, dpi=300)
+        plt.close(fig)

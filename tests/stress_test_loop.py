@@ -30,7 +30,7 @@ ADVERSARIAL_SMILES = [
     "C" * 150,                              # Unrealistic aliphatic chain
     "O=C1C=CC(=O)C=C1",                     # PAINS Quinone
     "O=C1NC(=S)SC1",                        # PAINS Rhodanine
-    "c1c([OX2H])c([OX2H])ccc1",             # Catechol
+    "c1c(O)c(O)ccc1",                      # Catechol
     "CC(=O)OC1=CC=CC=C1C(=O)O",             # Aspirin (small molecule)
     "CN1CCN(CC1)C2=NC=C(Cl)C3=C2C(C4=C(F)C=CC=C4F)=CC=C3" # Complex hetero-aromatic
 ]

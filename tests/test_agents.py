@@ -1,4 +1,7 @@
 """Unit tests for individual agents in the discovery system."""
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import pytest
 from src.target_scout import TargetScoutAgent
 from src.generative_chemist import GenerativeChemistAgent
@@ -15,6 +18,23 @@ def test_target_scout_kras():
     assert profile.pdb_id == "8AZV"
     assert "Asp12" in profile.pocket_residues
     assert msg.status == "SUCCESS"
+
+def test_target_scout_braf_and_scaffolds():
+    scout = TargetScoutAgent()
+    profile, msg = scout.scout_target("BRAF V600E")
+    assert profile.gene == "BRAF"
+    assert profile.pdb_id == "4MNE"
+    
+    chemist = GenerativeChemistAgent(mock=True)
+    cands, cmsg = chemist.generate_derivatives(profile.reference_ligand_smiles, profile.name, num_molecules=10)
+    assert len(cands) == 10
+    
+    critic = ADMETCriticAgent()
+    eval_cands, amsg = critic.evaluate_candidates(cands)
+    assert len(eval_cands) == 10
+    # Confirm no malformed SMILES parse crashes occurred
+    valid_count = sum(1 for c in eval_cands if c.admet_verdict in ("PASS", "FLAGGED"))
+    assert valid_count > 0
 
 def test_generative_chemist():
     chemist = GenerativeChemistAgent(mock=True)
@@ -68,3 +88,5 @@ def test_docking_and_pi_pareto():
     top_leads, _ = pi.evaluate_and_rank_leads(docked, profile)
     assert len(top_leads) > 0
     assert any(c.is_pareto_optimal for c in top_leads)
+    assert hasattr(top_leads[0], "composite_rank_score")
+    assert top_leads[0].composite_rank_score > 0

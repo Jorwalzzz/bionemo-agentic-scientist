@@ -122,8 +122,8 @@ class GenerativeChemistAgent:
                 "CCCS(=O)(=O)NC1=CC(=C(C=C1)C(=O)C2=CNC3=C2C=C(C=N3)C4=CC=C(Cl)C=C4)F",      # Mono-fluoro
                 "CCCS(=O)(=O)N(C)C1=C(F)C(=C(C=C1)C(=O)C2=CNC3=C2C=C(C=N3)C4=CC=C(Cl)C=C4)F",# N-methyl sulfonamide
                 "CCCS(=O)(=O)NC1=C(F)C(=C(C=C1)C(=O)C2=CNC3=C2C(F)=C(C=N3)C4=CC=C(Cl)C=C4)F",# Fluoro-azaindole
-                "C1CCS(=O)(=O)NC1=C(F)C(=C(C=C1)C(=O)C2=CNC3=C2C=C(C=N3)C4=CC=C(Cl)C=C4)F", # Cyclopropyl sulfonamide
-                "CCCS(=O)(=O)NC1=C(F)C(=C(C=C1)C(=O)C2=CNC3=C2C=C(C=N3)C4=CC=C(CF3)C=C4)F"  # Trifluoromethyl
+                "C1CC1S(=O)(=O)NC2=C(F)C(=C(C=C2)C(=O)C3=CNC4=C3C=C(C=N4)C5=CC=C(Cl)C=C5)F", # Cyclopropyl sulfonamide
+                "CCCS(=O)(=O)NC1=C(F)C(=C(C=C1)C(=O)C2=CNC3=C2C=C(C=N3)C4=CC=C(C(F)(F)F)C=C4)F"  # Trifluoromethyl
             ]
         else:
             # EGFR T790M / Gefitinib derivatives

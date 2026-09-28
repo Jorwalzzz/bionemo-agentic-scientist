@@ -1,22 +1,22 @@
-# Drug Candidate Selection Dossier: KRAS G12D
-**Target:** KRAS G12D (KRAS) | **UniProt:** P01116 | **PDB:** 8AZV  
-**Date of Selection:** 2026-09-28 07:00:47 UTC  
+# Drug Candidate Selection Dossier: EGFR T790M
+**Target:** EGFR T790M (EGFR) | **UniProt:** P00533 | **PDB:** 2ITZ  
+**Date of Selection:** 2026-09-28 07:28:25 UTC  
 **Principal Investigator:** Agentic BioNeMo Autonomous Discovery System  
 
 ---
 
 ## 1. Executive Summary & Clinical Rationale
-Targeting oncogenic **KRAS G12D** represents a transformative therapeutic avenue in clinical oncology. 
-Oncogenic KRAS G12D switch-II pocket driver in pancreatic and colorectal adenocarcinoma.
+Targeting oncogenic **EGFR T790M** represents a transformative therapeutic avenue in clinical oncology. 
+Acquired clinical gatekeeper resistance mutation in NSCLC kinase domain conferring steric clash.
 
-Using an autonomous closed-loop agentic workflow powered by **NVIDIA NIM MolMIM**, **RDKit ADMET screening**, and **NVIDIA NIM DiffDock**, we screened 14 bioisosteric derivatives of reference scaffold **MRTX1133**.
+Using an autonomous closed-loop agentic workflow powered by **NVIDIA NIM MolMIM**, **RDKit ADMET screening**, and **NVIDIA NIM DiffDock**, we screened 10 bioisosteric derivatives of reference scaffold **Gefitinib**.
 
 ### Key Discovery Highlights:
-- **Nominated Lead:** `NIM-LEAD-01-06`
-- **Predicted Binding Free Energy ($\Delta G$):** **-9.05 kcal/mol**
-- **Drug-likeness (QED):** **0.301** (Complies with Lipinski Rule of 5)
-- **Synthetic Accessibility Score:** **7.85 / 10**
-- **Target Pocket Residue Contacts:** Asp12, Tyr96, Gln61
+- **Nominated Lead:** `NIM-LEAD-02-06`
+- **Predicted Binding Free Energy ($\Delta G$):** **-9.06 kcal/mol**
+- **Drug-likeness (QED):** **0.641** (Complies with Lipinski Rule of 5)
+- **Synthetic Accessibility Score:** **5.77 / 10**
+- **Target Pocket Residue Contacts:** Met790, Lys745, Thr854
 
 ---
 
@@ -24,22 +24,22 @@ Using an autonomous closed-loop agentic workflow powered by **NVIDIA NIM MolMIM*
 
 | Lead ID | SMILES | $\Delta G$ (kcal/mol) | QED | MW (g/mol) | LogP | SAScore | Pareto? | ADMET Verdict |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **NIM-LEAD-01-06** | `O=C(N1CCN(C2=NC=C(Cl)C3=C2C(...` | **-9.05** | 0.301 | 549.0 | 5.46 | 7.85 | ★ YES | `FLAGGED` |
-| **NIM-LEAD-02-06** | `O=C(N1CCN(C2=NC=C(Cl)C3=C2C(...` | **-9.05** | 0.301 | 549.0 | 5.46 | 7.85 | ★ YES | `FLAGGED` |
-| **NIM-LEAD-01-03** | `O=C(N1CCN(C2=NC=C(F)C3=C2C(C...` | **-8.61** | 0.309 | 531.5 | 5.55 | 7.74 | ★ YES | `FLAGGED` |
-| **NIM-LEAD-02-03** | `O=C(N1CCN(C2=NC=C(F)C3=C2C(C...` | **-8.61** | 0.309 | 531.5 | 5.55 | 7.74 | ★ YES | `FLAGGED` |
-| **NIM-LEAD-01-01** | `O=C(N1CCN(C2=NC=C(Cl)C3=C2C(...` | **-8.60** | 0.297 | 548.0 | 6.07 | 7.85 | No | `FLAGGED` |
+| **NIM-LEAD-02-06** | `CC1=C(OCC2CCNCC2)C=C3C(=C1)N...` | **-9.06** | 0.641 | 400.9 | 4.85 | 5.77 | ★ YES | `PASS` |
+| **NIM-LEAD-01-01** | `COC1=C(OCC2CCNCC2)C=C3C(=C1)...` | **-9.12** | 0.614 | 416.9 | 4.55 | 5.88 | ★ YES | `PASS` |
+| **NIM-LEAD-02-01** | `COC1=C(OCC2CCNCC2)C=C3C(=C1)...` | **-9.12** | 0.614 | 416.9 | 4.55 | 5.88 | ★ YES | `PASS` |
+| **NIM-LEAD-02-05** | `COC1=C(OCC2CCNCC2)C=C3C(=C1)...` | **-9.11** | 0.606 | 406.5 | 3.88 | 5.85 | ★ YES | `PASS` |
+| **NIM-LEAD-01-02** | `COC1=C(OCC2CCOCC2)C=C3C(=C1)...` | **-8.96** | 0.610 | 417.9 | 4.98 | 5.89 | No | `PASS` |
 
 ---
 
 ## 3. ADMET & Liability Assessment
 - **Blood-Brain Barrier (BBB) Permeability:** 0 of top 5 leads meet CNS permeability heuristics.
-- **Cardiotoxicity (hERG Alert):** 5 flagged liabilities.
+- **Cardiotoxicity (hERG Alert):** 0 flagged liabilities.
 - **PAINS Motifs:** 0 reactive or assay-interfering sub-structures in final leads.
 
 ---
 
 ## 4. Recommended Experimental Next Steps (In Vitro & In Vivo)
-1. **Chemical Synthesis**: Solubilization and solid-phase synthesis targeting the core scaffold of `NIM-LEAD-01-06`.
-2. **Biophysical Validation**: Surface Plasmon Resonance (SPR) and Microscale Thermophoresis (MST) to determine $K_D$ dissociation constant against recombinant KRAS G12D.
+1. **Chemical Synthesis**: Solubilization and solid-phase synthesis targeting the core scaffold of `NIM-LEAD-02-06`.
+2. **Biophysical Validation**: Surface Plasmon Resonance (SPR) and Microscale Thermophoresis (MST) to determine $K_D$ dissociation constant against recombinant EGFR T790M.
 3. **Cellular Target Engagement**: NanoBRET cellular kinase binding assay in mutant cell line.

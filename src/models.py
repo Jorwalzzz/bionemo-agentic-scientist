@@ -46,6 +46,7 @@ class MoleculeCandidate:
     pose_sdf: str = ""
     is_pareto_optimal: bool = False
     generation_round: int = 1
+    composite_rank_score: float = 0.0
 
 @dataclass
 class AgentMessage:
