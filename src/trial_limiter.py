@@ -1,7 +1,7 @@
 """
 Agentic BioNeMo - Anti-Bypass Trial Rate Limiter & Fingerprinting Engine
 
-Provides multi-layered defense to enforce a strict maximum of 2 free trial runs:
+Provides multi-layered defense to enforce a strict maximum of 1 free trial run (protecting API credits & GPU resources):
 1. Cryptographically signed HMAC-SHA256 HttpOnly session cookies.
 2. High-entropy client canvas/WebGL/hardware fingerprint hashing.
 3. Socket-level Client IP tracking (prevents X-Forwarded-For spoofing).
@@ -27,8 +27,8 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 LEDGER_PATH = os.environ.get("TRIAL_LEDGER_PATH", os.path.join(DATA_DIR, "trial_ledger.json"))
 SECRET_KEY_PATH = os.path.join(DATA_DIR, ".trial_secret")
-MAX_TRIAL_RUNS = int(os.environ.get("MAX_TRIAL_RUNS", "2"))
-MAX_SUBNET_RUNS = int(os.environ.get("MAX_SUBNET_RUNS", "4"))
+MAX_TRIAL_RUNS = int(os.environ.get("MAX_TRIAL_RUNS", "1"))
+MAX_SUBNET_RUNS = int(os.environ.get("MAX_SUBNET_RUNS", "2"))
 
 
 def _get_or_create_secret_key() -> bytes:

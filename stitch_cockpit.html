@@ -387,10 +387,10 @@ tailwind.config = {
       <div id="trialExpiredAlert" class="hidden mt-3 p-3.5 rounded-xl bg-red-950/40 border border-red-500/40 text-xs animate-fade-in">
         <div class="flex items-center gap-2 font-bold text-red-400 mb-1">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-          <span>Free Trial Quota Reached (2 of 2 Runs Used)</span>
+          <span>Free Trial Quota Reached (1 of 1 Run Used)</span>
         </div>
         <p class="text-gray-300 leading-relaxed">
-          Demo trials are strictly limited to 2 discovery campaigns per device and network. To run <strong>unlimited campaigns</strong> with custom PDB targets, 10,000+ candidates, and GPU acceleration, launch the automated local installer below.
+          Demo trials are strictly limited to 1 discovery campaign per device and network to protect GPU and API credits. To run <strong>unlimited campaigns</strong> with custom PDB targets, 10,000+ candidates, and GPU acceleration, launch the automated local installer below.
         </p>
       </div>
 
@@ -538,7 +538,7 @@ function getClientFingerprint() {
 }
 const CLIENT_FP = getClientFingerprint();
 
-let trialState = { allowed: true, runs_used: 0, runs_remaining: 2, max_runs: 2, is_locked: false };
+let trialState = { allowed: true, runs_used: 0, runs_remaining: 1, max_runs: 1, is_locked: false };
 
 async function fetchTrialStatus() {
   try {
@@ -564,21 +564,17 @@ function updateTrialUI(status) {
 
   if (status.is_locked || status.runs_remaining === 0) {
     if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse";
-    if (text) text.innerHTML = `<span class="text-red-400 font-bold">🔒 Free Trial Expired (2/2 Used)</span> • `;
+    if (text) text.innerHTML = `<span class="text-red-400 font-bold">🔒 Free Trial Expired (1/1 Run Used)</span> • `;
     if (runBtn && !isRunning) {
       runBtn.onclick = () => openInstallModal(true);
       runBtn.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(118, 185, 0, 0.15))';
       runBtn.style.border = '1px solid rgba(239, 68, 68, 0.6)';
-      if (runLabel) runLabel.textContent = '🔒 Free Trial Limit Reached (2/2 Used) — Get Full Local App';
+      if (runLabel) runLabel.textContent = '🔒 Free Trial Limit Reached (1/1 Used) — Get Full Local App';
     }
-  } else if (status.runs_remaining === 1) {
-    if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse";
-    if (text) text.innerHTML = `<span class="text-yellow-400 font-semibold">⚡ Free Trial: 1 of 2 Runs Left</span> • `;
-    if (runLabel && !isRunning) runLabel.textContent = '🚀 Run Discovery (1 Free Trial Run Left)';
   } else {
     if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-nvidia-green animate-pulse";
-    if (text) text.innerHTML = `<span class="text-gray-300">Free Trial: 2 of 2 Runs Available</span> • `;
-    if (runLabel && !isRunning) runLabel.textContent = '🚀 Run Autonomous Discovery';
+    if (text) text.innerHTML = `<span class="text-gray-300 font-medium">Free Trial: 1 Single Demo Run Available</span> • `;
+    if (runLabel && !isRunning) runLabel.textContent = '🚀 Run Autonomous Discovery (1 Free Demo Run)';
   }
 }
 
@@ -684,9 +680,9 @@ async function runDiscovery() {
       const errData = await res.json();
       isRunning = false;
       document.getElementById('runBtn').disabled = false;
-      updateTrialUI({ runs_used: errData.runs_used || 2, runs_remaining: 0, is_locked: true, max_runs: 2 });
+      updateTrialUI({ runs_used: errData.runs_used || 1, runs_remaining: 0, is_locked: true, max_runs: 1 });
       openInstallModal(true);
-      showToast('🔒 Free trial limit reached (2/2 runs used). Install the Full Local App for unlimited runs!');
+      showToast('🔒 Free trial limit reached (1/1 run used). Install the Full Local App for unlimited runs!');
       return;
     }
 
@@ -783,7 +779,7 @@ async function runDiscovery() {
     document.getElementById('runBtn').onclick = () => openInstallModal(true);
     document.getElementById('runBtn').style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(118, 185, 0, 0.15))';
     document.getElementById('runBtn').style.border = '1px solid rgba(239, 68, 68, 0.6)';
-    document.getElementById('runLabel').textContent = '🔒 Trial Limit Reached (2/2) — Get Full Local App';
+    document.getElementById('runLabel').textContent = '🔒 Trial Limit Reached (1/1) — Get Full Local App';
     showToast('🎉 Free Trial Complete! Launch the Full Local App for unlimited discovery.');
     setTimeout(() => {
       openInstallModal(true);
@@ -905,9 +901,9 @@ function openInstallModal(isTrialExpired=false) {
   if (isTrialExpired || trialState.is_locked || trialState.runs_remaining === 0) {
     if (alertBox) alertBox.classList.remove('hidden');
     const t = document.getElementById('modalTitle');
-    if (t) t.textContent = '🔒 Free Trial Limit Reached (2/2 Runs Used)';
+    if (t) t.textContent = '🔒 Free Trial Limit Reached (1 of 1 Run Used)';
     const s = document.getElementById('modalSubtitle');
-    if (s) s.textContent = 'You have used both free trial runs for your device/network. Launch the Full Local App for 100% UNLIMITED discovery campaigns:';
+    if (s) s.textContent = 'You have completed your 1 free demo run. To protect NVIDIA API credits and run 100% UNLIMITED discovery campaigns on your own workstation, launch the Full Local App:';
   } else {
     if (alertBox) alertBox.classList.add('hidden');
     const t = document.getElementById('modalTitle');
