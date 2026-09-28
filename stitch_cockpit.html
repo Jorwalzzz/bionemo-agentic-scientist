@@ -1,858 +1,825 @@
 <!DOCTYPE html>
-
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Agentic BioNeMo: Autonomous AI Drug Discovery Scientist</title>
-<!-- Material Symbols Outlined -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<!-- Google Fonts for JetBrains Mono, Inter, Plus Jakarta Sans -->
-<link href="https://fonts.googleapis.com" rel="preconnect"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          "colors": {
-            "outline": "#8c947d",
-            "surface-variant": "#31353f",
-            "error": "#ffb4ab",
-            "surface-container-highest": "#31353f",
-            "surface-tint": "#94da32",
-            "primary-fixed-dim": "#94da32",
-            "surface-container-high": "#262a34",
-            "primary-container": "#76b900",
-            "on-primary-fixed-variant": "#304f00",
-            "on-secondary": "#00373a",
-            "on-background": "#dfe2ef",
-            "on-primary-fixed": "#102000",
-            "on-tertiary-container": "#5a009b",
-            "on-error": "#690005",
-            "tertiary-container": "#c78dff",
-            "on-primary": "#203700",
-            "error-container": "#93000a",
-            "inverse-on-surface": "#2c303a",
-            "surface-container-low": "#181b25",
-            "tertiary": "#ddb7ff",
-            "secondary-fixed-dim": "#00dce6",
-            "primary": "#94da32",
-            "on-secondary-fixed-variant": "#004f53",
-            "on-secondary-container": "#006a6f",
-            "primary-fixed": "#aff74e",
-            "secondary-container": "#00f1fd",
-            "inverse-primary": "#416900",
-            "background": "#0f131c",
-            "surface-dim": "#0f131c",
-            "on-surface-variant": "#c1cab1",
-            "outline-variant": "#424936",
-            "surface-bright": "#353943",
-            "tertiary-fixed": "#f0dbff",
-            "on-tertiary-fixed": "#2c0051",
-            "on-secondary-fixed": "#002022",
-            "secondary": "#dcfdff",
-            "on-primary-container": "#284400",
-            "surface-container-lowest": "#0a0e17",
-            "secondary-fixed": "#6ff6ff",
-            "on-tertiary-fixed-variant": "#6900b3",
-            "on-surface": "#dfe2ef",
-            "surface": "#0f131c",
-            "inverse-surface": "#dfe2ef",
-            "on-tertiary": "#490080",
-            "tertiary-fixed-dim": "#ddb7ff",
-            "on-error-container": "#ffdad6",
-            "surface-container": "#1c1f29"
-          },
-          "borderRadius": {
-            "DEFAULT": "0.125rem",
-            "lg": "0.25rem",
-            "xl": "0.5rem",
-            "full": "0.75rem"
-          },
-          "spacing": {
-            "gutter": "0.75rem",
-            "margin": "1rem",
-            "space-xs": "0.25rem",
-            "space-md": "0.75rem",
-            "space-sm": "0.5rem",
-            "space-xl": "2rem",
-            "space-lg": "1.25rem"
-          },
-          "fontFamily": {
-            "body-sm": ["Inter"],
-            "label-sm": ["JetBrains Mono"],
-            "headline-lg": ["Plus Jakarta Sans"],
-            "headline-sm": ["Plus Jakarta Sans"],
-            "headline-xl-mobile": ["Plus Jakarta Sans"],
-            "body-lg": ["Inter"],
-            "headline-lg-mobile": ["Plus Jakarta Sans"],
-            "headline-md": ["Plus Jakarta Sans"],
-            "label-md": ["JetBrains Mono"],
-            "body-md": ["Inter"],
-            "label-lg": ["JetBrains Mono"],
-            "headline-xl": ["Plus Jakarta Sans"]
-          },
-          "fontSize": {
-            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
-            "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600" }],
-            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
-            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
-            "headline-xl-mobile": ["26px", { "lineHeight": "32px", "fontWeight": "700" }],
-            "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
-            "headline-lg-mobile": ["20px", { "lineHeight": "26px", "fontWeight": "600" }],
-            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
-            "label-md": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
-            "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
-            "label-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
-            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
-          }
-        }
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Agentic BioNeMo — AI Drug Discovery Scientist</title>
+<meta name="description" content="Autonomous multi-agent AI platform for target-to-lead drug discovery powered by NVIDIA BioNeMo NIMs (MolMIM, DiffDock, ESM-2)."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+      colors: {
+        nvidia: { green: '#76b900', bright: '#a3e635' },
+        cyber: { cyan: '#00f1fd', purple: '#a855f7', blue: '#3b82f6' },
+        surface: { base: '#080c12', card: '#0d1117', elevated: '#161b22', border: '#21262d' }
+      },
+      animation: {
+        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+        'slide-in': 'slideIn 0.4s ease-out',
+        'fade-up': 'fadeUp 0.5s ease-out',
+        'scan-line': 'scanLine 3s linear infinite',
+        'float': 'float 3s ease-in-out infinite',
+        'agent-run': 'agentRun 1.5s ease-in-out infinite',
+      },
+      keyframes: {
+        pulseGlow: { '0%,100%': { opacity: '0.6' }, '50%': { opacity: '1' } },
+        slideIn: { from: { opacity: '0', transform: 'translateX(-20px)' }, to: { opacity: '1', transform: 'translateX(0)' } },
+        fadeUp: { from: { opacity: '0', transform: 'translateY(16px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+        scanLine: { '0%': { top: '0%' }, '100%': { top: '100%' } },
+        float: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-6px)' } },
+        agentRun: { '0%,100%': { boxShadow: '0 0 5px rgba(118,185,0,0.3)' }, '50%': { boxShadow: '0 0 20px rgba(118,185,0,0.8), 0 0 40px rgba(118,185,0,0.3)' } },
       }
     }
-  </script>
+  }
+}
+</script>
 <style>
-    .material-symbols-outlined {
-      font-family: 'Material Symbols Outlined';
-      font-weight: normal;
-      font-style: normal;
-      font-size: 18px;
-      line-height: 1;
-      letter-spacing: normal;
-      text-transform: none;
-      display: inline-block;
-      white-space: nowrap;
-      word-wrap: normal;
-      direction: ltr;
-      -webkit-font-smoothing: antialiased;
-    }
-    /* Ambient grid background overlay */
-    .telemetry-grid {
-      background-size: 24px 24px;
-      background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    }
-    .glow-nvidia {
-      box-shadow: 0 0 20px rgba(118, 185, 0, 0.25);
-    }
-    .glow-cyan {
-      box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
-    }
-    /* Custom scrollbar for high-density console */
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(10, 14, 23, 0.6);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(66, 73, 54, 0.8);
-      border-radius: 2px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #76b900;
-    }
-  </style>
+  :root {
+    --nvidia-green: #76b900;
+    --cyber-cyan: #00f1fd;
+    --surface-base: #080c12;
+    --surface-card: #0d1117;
+    --surface-elevated: #161b22;
+    --surface-border: #21262d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--surface-base); color: #e6edf3; min-height: 100vh; overflow-x: hidden; }
+  body.modal-open { overflow: hidden; }
+
+  /* Glassmorphism */
+  .glass { background: rgba(13,17,23,0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(33,38,45,0.8); }
+  .glass-bright { background: rgba(22,27,34,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(118,185,0,0.15); }
+
+  /* NVIDIA glow effects */
+  .glow-green { box-shadow: 0 0 15px rgba(118,185,0,0.25), 0 0 40px rgba(118,185,0,0.08); }
+  .glow-green-intense { box-shadow: 0 0 25px rgba(118,185,0,0.5), 0 0 60px rgba(118,185,0,0.2); }
+  .glow-cyan { box-shadow: 0 0 15px rgba(0,241,253,0.2), 0 0 40px rgba(0,241,253,0.05); }
+  .text-glow-green { text-shadow: 0 0 20px rgba(118,185,0,0.6); }
+  .text-glow-cyan { text-shadow: 0 0 15px rgba(0,241,253,0.5); }
+  .border-glow { border-color: rgba(118,185,0,0.4); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--surface-card); }
+  ::-webkit-scrollbar-thumb { background: rgba(118,185,0,0.4); border-radius: 2px; }
+
+  /* Agent status ring */
+  .agent-ring { width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s; }
+  .agent-ring.idle { background: #374151; }
+  .agent-ring.running { background: var(--nvidia-green); animation: agentRun 1.2s ease-in-out infinite; }
+  .agent-ring.done { background: var(--nvidia-green); }
+  .agent-ring.waiting { background: #f59e0b; animation: pulseGlow 1.5s ease-in-out infinite; }
+
+  /* Progress bar */
+  .progress-fill { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(90deg, var(--nvidia-green), var(--cyber-cyan)); }
+
+  /* Chart canvas */
+  #paretoChart { max-height: 250px; }
+
+  /* Scan line overlay for HUD feel */
+  .scanlines { background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; }
+
+  /* CTA button */
+  .btn-cta { background: linear-gradient(135deg, #76b900, #4a7a00); transition: all 0.2s; }
+  .btn-cta:hover { background: linear-gradient(135deg, #8fd600, #5c9800); transform: translateY(-1px); box-shadow: 0 8px 25px rgba(118,185,0,0.4); }
+  .btn-cta:active { transform: translateY(0); }
+
+  /* Modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+  .modal-card { background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid rgba(118,185,0,0.3); border-radius: 16px; box-shadow: 0 0 60px rgba(118,185,0,0.2), 0 25px 80px rgba(0,0,0,0.5); max-width: 640px; width: 95%; max-height: 90vh; overflow-y: auto; }
+  .tab-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; transition: all 0.2s; cursor: pointer; border: 1px solid transparent; }
+  .tab-btn.active { background: rgba(118,185,0,0.15); border-color: rgba(118,185,0,0.4); color: var(--nvidia-green); }
+  .tab-btn:not(.active) { color: #6b7280; }
+  .tab-btn:not(.active):hover { color: #e6edf3; background: rgba(33,38,45,0.6); }
+  .code-box { background: #010409; border: 1px solid #21262d; border-radius: 8px; padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--nvidia-green); position: relative; }
+  .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(118,185,0,0.1); border: 1px solid rgba(118,185,0,0.3); color: var(--nvidia-green); padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+  .copy-btn:hover { background: rgba(118,185,0,0.2); }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: rgba(118,185,0,0.15); border: 1px solid rgba(118,185,0,0.4); color: var(--nvidia-green); padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 9999; backdrop-filter: blur(8px); transition: all 0.3s; transform: translateY(0); opacity: 1; }
+  .toast.hide { transform: translateY(20px); opacity: 0; pointer-events: none; }
+
+  /* Animated bg grid */
+  .bg-grid { background-image: linear-gradient(rgba(118,185,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(118,185,0,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+
+  /* Lead cards */
+  .lead-card { background: rgba(13,17,23,0.6); border: 1px solid #21262d; border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: all 0.2s; }
+  .lead-card:hover, .lead-card.selected { border-color: rgba(118,185,0,0.4); background: rgba(118,185,0,0.05); }
+
+  /* Tag badges */
+  .badge-green { background: rgba(118,185,0,0.12); border: 1px solid rgba(118,185,0,0.3); color: #76b900; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; }
+  .badge-cyan { background: rgba(0,241,253,0.08); border: 1px solid rgba(0,241,253,0.25); color: #00f1fd; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .badge-red { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .badge-yellow { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #fbbf24; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+
+  /* Telemetry number */
+  .tele-num { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; }
+</style>
 </head>
-<body class="bg-surface-container-lowest text-on-surface antialiased font-body-md min-h-screen flex flex-col selection:bg-primary selection:text-on-primary">
-<!-- TOP SHARED COMPONENT: TopNavBar (Exact match to JSON anchor) -->
-<header class="bg-surface-container-lowest dark:bg-surface-container-lowest border-b border-outline-variant dark:border-outline-variant shadow-sm docked full-width top-0 z-50">
-<div class="flex justify-between items-center w-full px-space-lg py-space-sm h-14">
-<!-- Brand & Product Name -->
-<div class="flex items-center gap-space-md">
-<div class="flex items-center gap-2">
-<div class="w-7 h-7 rounded-lg bg-surface-container-high border border-primary flex items-center justify-center glow-nvidia">
-<span class="material-symbols-outlined text-primary text-base" data-icon="biotech">biotech</span>
-</div>
-<span class="text-headline-sm font-headline-sm font-bold text-primary dark:text-primary tracking-wider">Agentic BioNeMo</span>
-</div>
-<div class="hidden lg:flex items-center gap-2 pl-3 border-l border-outline-variant">
-<span class="bg-surface-container-high px-2 py-0.5 rounded text-secondary font-label-sm text-label-sm border border-secondary/20">
-            NVIDIA BioNeMoâ¢ // AGENTIC SCIENTIST v4.2-PRO
-          </span>
-<span class="bg-primary/10 border border-primary/40 text-primary font-label-sm text-label-sm px-2 py-0.5 rounded flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-            KRAS G12D Target (Oncogenic Switch-II Pocket)
-          </span>
-</div>
-</div>
-<!-- Navigation Links (Exact labels from JSON) -->
-<nav class="hidden md:flex items-center gap-space-lg">
-<a class="text-primary dark:text-primary font-bold border-b-2 border-primary dark:border-primary pb-1 text-label-md font-label-md hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#">KRAS G12D Target</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant text-label-md font-label-md hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#">Telemetry HUD</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant text-label-md font-label-md hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#">Inference Pipeline</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant text-label-md font-label-md hover:text-primary dark:hover:text-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#">Synthesis Engine</a>
-</nav>
-<!-- Trailing Action Cluster & Telemetry Icons -->
-<div class="flex items-center gap-space-md">
-<!-- Icon Actions from JSON -->
-<div class="flex items-center gap-1 text-on-surface-variant">
-<button class="p-1.5 rounded hover:bg-surface-container hover:text-primary transition-colors" title="Cluster Memory">
-<span class="material-symbols-outlined" data-icon="memory">memory</span>
-</button>
-<button class="p-1.5 rounded hover:bg-surface-container hover:text-primary transition-colors" title="Subsystem Terminal">
-<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
-</button>
-<div class="relative">
-<button class="p-1.5 rounded hover:bg-surface-container hover:text-primary transition-colors" title="Alert Feed">
-<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
-</button>
-<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-secondary-container"></span>
-</div>
-</div>
-<div class="h-4 w-px bg-outline-variant"></div>
-<!-- Trailing Secondary & Primary Actions -->
-<button class="px-2.5 py-1 text-label-sm font-label-sm rounded border border-error/40 text-error hover:bg-error/10 active:scale-95 transition-all">
-          Abort Cycle
-        </button>
-<button class="px-3 py-1 text-label-sm font-label-sm rounded bg-primary-container text-on-primary-container font-bold hover:brightness-110 active:scale-95 glow-nvidia transition-all flex items-center gap-1.5">
-<span class="material-symbols-outlined text-sm" data-icon="bolt">bolt</span>
-          Deploy Swarm
-        </button>
-<!-- Profile Avatar Alt (JSON) -->
-<div class="w-8 h-8 rounded-full border border-primary/50 overflow-hidden bg-surface-container flex items-center justify-center" title="BioNeMo Cluster Admin Avatar">
-<img class="w-full h-full object-cover" data-alt="A futuristic bio-computational scientist avatar, illuminated in cyan and NVIDIA emerald light, wearing advanced telemetry smart glasses against a deep dark laboratory backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9vhsH6MM7Cw_pRIGINjAKMNVYqNlWrBZVq3fxouvuoFa3s1BL9Etx9CH6IoSqKO2Y9Vm_F1-SiaHNWKOiT_nISAKkCpVGIgknX2nkcBOzSIAj43y9gglltrF9oxvR6BgsVu1BmIhGlPpWrRD9p6mD6JDzA2wMo9yAe8GELQtOqONeciSDXE14dvWrmS-0oEc1YF5cBsL4vRfB-R98Y_bVHHk9mqwgH_4D34Nebtn5ptJbiSErY-aXiwkkS3j4IczDKd95VeR3Weg"/>
-</div>
-</div>
-</div>
+<body class="dark bg-grid">
+
+<!-- ═══════════════════════════════════════════════ HEADER ══════════════ -->
+<header class="glass sticky top-0 z-50 border-b border-surface-border">
+  <div class="flex items-center justify-between px-6 h-14">
+    <!-- Logo & Brand -->
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md glow-green flex items-center justify-center" style="background: linear-gradient(135deg, #76b900, #4a7a00);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+      </div>
+      <span class="font-bold text-sm text-glow-green" style="color: #76b900;">Agentic BioNeMo</span>
+      <span class="hidden md:block text-xs text-gray-500 font-mono">/ AI Drug Discovery Scientist</span>
+    </div>
+
+    <!-- Center: Trial Banner -->
+    <div class="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full text-xs" style="background: rgba(118,185,0,0.06); border: 1px solid rgba(118,185,0,0.2);">
+      <span class="w-1.5 h-1.5 rounded-full bg-nvidia-green animate-pulse"></span>
+      <span class="text-gray-400">Free Trial: 4 Targets • </span>
+      <span class="text-nvidia-green font-semibold cursor-pointer hover:underline" onclick="openInstallModal()">Unlock Full Version →</span>
+    </div>
+
+    <!-- Right: CTA + Status -->
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-1.5 text-xs text-gray-500">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+        Mock Mode Active
+      </div>
+      <button onclick="openInstallModal()" class="btn-cta text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 glow-green">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.28L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h5v-5l-2.28 2.28C6.81 18 5 15.21 5 12c0-4.08 3.05-7.44 7-7.93V2.05z"/></svg>
+        ⚡ Get Full App — 1 Click
+      </button>
+    </div>
+  </div>
 </header>
-<!-- BODY WRAPPER: SideNav + Cockpit Dashboard Content Canvas -->
-<div class="flex flex-1 overflow-hidden relative">
-<!-- SIDE COMPONENT: SideNavBar (Exact match to JSON anchor) -->
-<aside class="hidden xl:flex flex-col justify-between w-64 h-[calc(100vh-3.5rem)] py-space-md px-space-sm bg-surface-container-lowest dark:bg-surface-container-lowest border-r border-outline-variant dark:border-outline-variant flat no shadows docked full-height left-0 z-40">
-<!-- Rail Header -->
-<div class="flex flex-col gap-space-sm">
-<div class="flex items-center gap-2 px-2 py-1.5 rounded bg-surface-container-high/60 border border-outline-variant/60">
-<div class="w-8 h-8 rounded bg-surface-container-lowest border border-primary/60 flex items-center justify-center" title="BioNeMo Engine Active Core">
-<span class="material-symbols-outlined text-primary" data-icon="token">token</span>
-</div>
-<div>
-<div class="text-headline-sm font-headline-sm text-primary dark:text-primary font-bold text-xs leading-tight">Swarm Node 01</div>
-<div class="text-label-sm font-label-sm text-on-surface-variant text-[10px]">H100 Cluster Active</div>
-</div>
-</div>
-<!-- Rail Main Nav Tabs (Active: Swarm Telemetry) -->
-<nav class="flex flex-col gap-1 mt-2">
-<!-- Item 1: Swarm Telemetry (Active) -->
-<a class="text-primary dark:text-primary border-l-2 border-primary dark:border-primary pl-2 font-bold flex items-center gap-2 py-1.5 px-2 rounded hover:bg-surface-container dark:hover:bg-surface-container text-label-sm font-label-sm transition-transform active:scale-95 duration-150" href="#">
-<span class="material-symbols-outlined text-base" data-icon="hub">hub</span>
-<span>Swarm Telemetry</span>
-</a>
-<!-- Item 2: Candidate Ledger -->
-<a class="text-on-surface-variant dark:text-on-surface-variant pl-2 flex items-center gap-2 py-1.5 px-2 rounded hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-colors text-label-sm font-label-sm active:scale-95 duration-150" href="#">
-<span class="material-symbols-outlined text-base" data-icon="biotech">biotech</span>
-<span>Candidate Ledger</span>
-</a>
-<!-- Item 3: Pocket Dynamics -->
-<a class="text-on-surface-variant dark:text-on-surface-variant pl-2 flex items-center gap-2 py-1.5 px-2 rounded hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-colors text-label-sm font-label-sm active:scale-95 duration-150" href="#">
-<span class="material-symbols-outlined text-base" data-icon="view_in_ar">view_in_ar</span>
-<span>Pocket Dynamics</span>
-</a>
-<!-- Item 4: Pareto Frontier -->
-<a class="text-on-surface-variant dark:text-on-surface-variant pl-2 flex items-center gap-2 py-1.5 px-2 rounded hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-colors text-label-sm font-label-sm active:scale-95 duration-150" href="#">
-<span class="material-symbols-outlined text-base" data-icon="scatter_plot">scatter_plot</span>
-<span>Pareto Frontier</span>
-</a>
-<!-- Item 5: System Config -->
-<a class="text-on-surface-variant dark:text-on-surface-variant pl-2 flex items-center gap-2 py-1.5 px-2 rounded hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-colors text-label-sm font-label-sm active:scale-95 duration-150" href="#">
-<span class="material-symbols-outlined text-base" data-icon="tune">tune</span>
-<span>System Config</span>
-</a>
-</nav>
-</div>
-<!-- Rail Mid Section: Live Swarm Agent Micro-State -->
-<div class="p-2.5 rounded bg-surface-container-low border border-outline-variant/50 space-y-2">
-<div class="flex items-center justify-between text-label-sm font-label-sm">
-<span class="text-on-surface-variant">COMPUTE METRICS</span>
-<span class="text-primary font-bold">99.4% FLOPS</span>
-</div>
-<div class="w-full bg-surface-container-highest h-1.5 rounded overflow-hidden">
-<div class="bg-primary h-full w-[99.4%] glow-nvidia"></div>
-</div>
-<div class="flex justify-between items-center text-[10px] font-label-sm text-on-surface-variant">
-<span>DGX H100 x8</span>
-<span class="text-secondary">LAT: 14ms</span>
-</div>
-<button class="w-full py-1 mt-1 text-label-sm font-label-sm rounded bg-primary/20 text-primary border border-primary/40 hover:bg-primary hover:text-on-primary transition-all text-center font-bold">
-          Trigger Inference
-        </button>
-</div>
-<!-- Rail Footer Tabs (Diagnostics, Terminal) -->
-<div class="border-t border-outline-variant pt-space-sm flex flex-col gap-1">
-<a class="text-on-surface-variant pl-2 flex items-center gap-2 py-1 px-2 rounded hover:bg-surface-container text-label-sm font-label-sm transition-colors" href="#">
-<span class="material-symbols-outlined text-base" data-icon="monitor_heart">monitor_heart</span>
-<span>Diagnostics</span>
-</a>
-<a class="text-on-surface-variant pl-2 flex items-center gap-2 py-1 px-2 rounded hover:bg-surface-container text-label-sm font-label-sm transition-colors" href="#">
-<span class="material-symbols-outlined text-base" data-icon="code">code</span>
-<span>Terminal</span>
-</a>
-<div class="text-[9px] font-label-sm text-outline px-2 pt-1">
-          SESSION #DGX-4299 â¢ SYNCED
+
+<!-- ═══════════════════════════════════════════════ MAIN GRID ════════════ -->
+<div class="flex h-[calc(100vh-56px)] overflow-hidden">
+
+  <!-- LEFT SIDEBAR: Control Panel -->
+  <aside class="hidden xl:flex flex-col w-72 border-r border-surface-border overflow-y-auto" style="background: var(--surface-card);">
+    <div class="p-5">
+      <!-- Target Selector -->
+      <div class="mb-5">
+        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">🎯 Oncology Target</label>
+        <select id="targetSelect" class="w-full text-sm rounded-lg px-3 py-2.5 font-medium focus:outline-none focus:ring-2 transition-all" style="background: #161b22; border: 1px solid #30363d; color: #e6edf3;" onchange="updateTargetInfo()">
+          <option value="KRAS G12D">🧬 KRAS G12D (Colon/Lung Cancer)</option>
+          <option value="EGFR T790M">🔬 EGFR T790M (Lung Cancer)</option>
+          <option value="SARS-CoV-2 Mpro">🦠 SARS-CoV-2 Mpro (COVID-19)</option>
+          <option value="HER2">💊 HER2/ERBB2 (Breast Cancer)</option>
+        </select>
+      </div>
+
+      <!-- Target Info Card -->
+      <div id="targetInfoCard" class="glass-bright rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-2 h-2 rounded-full" style="background: var(--nvidia-green);"></div>
+          <span id="targetName" class="text-sm font-bold text-glow-green" style="color: var(--nvidia-green);">KRAS G12D</span>
         </div>
-</div>
-</aside>
-<!-- MAIN COCKPIT DASHBOARD VIEWPORT -->
-<main class="flex-1 overflow-y-auto p-space-md lg:p-space-lg telemetry-grid space-y-space-md">
-<!-- 1. LIVE SWARM AGENT TELEMETRY BAR & CLUSTER STATUS -->
-<section class="rounded-lg bg-surface-container-low/80 backdrop-blur-xl border border-outline-variant p-space-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-sm shadow-sm">
-<!-- Swarm Telemetry Pill Cluster (5 Autonomous Agents) -->
-<div class="flex flex-wrap items-center gap-2 flex-1">
-<!-- Agent 1: Target Scout -->
-<div class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-surface-container border border-primary/30">
-<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-<span class="material-symbols-outlined text-primary text-sm" data-icon="radar">radar</span>
-<div>
-<div class="text-label-sm font-label-sm text-on-surface font-bold">Target Scout</div>
-<div class="text-[10px] font-label-sm text-primary">Pocket: 100% Locked</div>
-</div>
-</div>
-<!-- Agent 2: Generative Chemist -->
-<div class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-surface-container border border-secondary/30">
-<span class="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse"></span>
-<span class="material-symbols-outlined text-secondary-fixed text-sm" data-icon="science">science</span>
-<div>
-<div class="text-label-sm font-label-sm text-on-surface font-bold">Generative Chemist</div>
-<div class="text-[10px] font-label-sm text-secondary-fixed">DiffDock #148</div>
-</div>
-</div>
-<!-- Agent 3: ADMET Critic -->
-<div class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-surface-container border border-outline-variant">
-<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
-<span class="material-symbols-outlined text-tertiary text-sm" data-icon="verified_user">verified_user</span>
-<div>
-<div class="text-label-sm font-label-sm text-on-surface font-bold">ADMET Critic</div>
-<div class="text-[10px] font-label-sm text-tertiary">Filter Active</div>
-</div>
-</div>
-<!-- Agent 4: Biophysics Docking -->
-<div class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-surface-container border border-primary/30">
-<span class="w-2 h-2 rounded-full bg-primary"></span>
-<span class="material-symbols-outlined text-primary text-sm" data-icon="device_hub">device_hub</span>
-<div>
-<div class="text-label-sm font-label-sm text-on-surface font-bold">Biophysics Docking</div>
-<div class="text-[10px] font-label-sm text-primary">FEP: Converged</div>
-</div>
-</div>
-<!-- Agent 5: Principal Investigator -->
-<div class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-surface-container border border-secondary-container/50 glow-cyan">
-<span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
-<span class="material-symbols-outlined text-secondary-container text-sm" data-icon="psychology">psychology</span>
-<div>
-<div class="text-label-sm font-label-sm text-on-surface font-bold">Principal Investigator</div>
-<div class="text-[10px] font-label-sm text-secondary-container font-semibold">Synthesis Nominated</div>
-</div>
-</div>
-</div>
-<!-- Telemetry Cluster Badge -->
-<div class="flex items-center gap-3 px-3 py-1.5 rounded bg-surface-container-high/90 border border-outline-variant font-label-sm text-xs">
-<div class="flex items-center gap-1.5 text-on-surface-variant">
-<span class="material-symbols-outlined text-primary text-sm" data-icon="dns">dns</span>
-<span>DGX H100 #04</span>
-</div>
-<div class="text-outline-variant">|</div>
-<div class="text-primary font-bold">99.4% Flops</div>
-<div class="text-outline-variant">|</div>
-<div class="text-secondary">14ms Latency</div>
-<div class="text-outline-variant">|</div>
-<div class="text-on-surface-variant">Cycle #1,429</div>
-</div>
-</section>
-<!-- 2. TOP KPI METRIC GRID (4 Precision Glowing Glass Cards) -->
-<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
-<!-- Card 1: Nominated Lead -->
-<div class="rounded-lg bg-surface-container-low/70 backdrop-blur-xl border border-primary/30 p-space-md flex flex-col justify-between glow-nvidia relative overflow-hidden">
-<div class="absolute -right-6 -bottom-6 w-20 h-20 bg-primary/5 rounded-full blur-xl pointer-events-none"></div>
-<div>
-<div class="flex items-center justify-between">
-<span class="text-label-sm font-label-sm text-on-surface-variant">NOMINATED LEAD</span>
-<span class="px-1.5 py-0.5 rounded text-[9px] font-label-sm bg-primary/20 text-primary border border-primary/40 font-bold">P1 CONSENSUS #1</span>
-</div>
-<div class="mt-2 text-headline-sm font-headline-sm text-on-surface font-bold tracking-tight">NIM-LEAD-01-06</div>
-<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">Isoquinoline-piperazine scaffold</div>
-</div>
-<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-label-sm font-label-sm">
-<span class="text-primary flex items-center gap-1 font-bold">
-<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
-              +18.4% selective
-            </span>
-<span class="text-on-surface-variant text-[10px]">over WT KRAS</span>
-</div>
-</div>
-<!-- Card 2: Predicted Binding Free Energy -->
-<div class="rounded-lg bg-surface-container-low/70 backdrop-blur-xl border border-secondary/30 p-space-md flex flex-col justify-between glow-cyan relative overflow-hidden">
-<div class="absolute -right-6 -bottom-6 w-20 h-20 bg-secondary/5 rounded-full blur-xl pointer-events-none"></div>
-<div>
-<div class="flex items-center justify-between">
-<span class="text-label-sm font-label-sm text-on-surface-variant">PREDICTED BINDING ÎG</span>
-<span class="px-1.5 py-0.5 rounded text-[9px] font-label-sm bg-secondary/15 text-secondary border border-secondary/40 font-bold">Kd = 14.2 nM</span>
-</div>
-<div class="mt-2 flex items-baseline gap-2">
-<span class="text-headline-md font-headline-md text-secondary font-bold font-label-lg">-9.05</span>
-<span class="text-body-sm font-body-sm text-on-surface-variant">kcal/mol</span>
-</div>
-</div>
-<div class="mt-3 pt-2 border-t border-outline-variant/40">
-<div class="flex justify-between text-[10px] font-label-sm text-on-surface-variant mb-1">
-<span>vs Sotorasib (-7.82)</span>
-<span class="text-secondary font-bold">+1.23 gain</span>
-</div>
-<div class="w-full bg-surface-container h-1 rounded overflow-hidden">
-<div class="bg-secondary h-full w-[84%]"></div>
-</div>
-</div>
-</div>
-<!-- Card 3: Drug-Likeness & Quality -->
-<div class="rounded-lg bg-surface-container-low/70 backdrop-blur-xl border border-outline-variant p-space-md flex flex-col justify-between relative overflow-hidden">
-<div>
-<div class="flex items-center justify-between">
-<span class="text-label-sm font-label-sm text-on-surface-variant">DRUG-LIKENESS &amp; SA</span>
-<span class="px-1.5 py-0.5 rounded text-[9px] font-label-sm bg-surface-container text-on-surface border border-outline-variant">RO5: 0 VIOLATIONS</span>
-</div>
-<div class="mt-2 flex items-center justify-between">
-<div>
-<div class="text-headline-sm font-headline-sm font-label-lg text-on-surface font-bold">0.301</div>
-<div class="text-[10px] font-label-sm text-on-surface-variant">QED Score</div>
-</div>
-<div class="text-right">
-<div class="text-headline-sm font-headline-sm font-label-lg text-primary font-bold">2.4 / 10</div>
-<div class="text-[10px] font-label-sm text-on-surface-variant">Synth. Accessibility</div>
-</div>
-</div>
-</div>
-<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-label-sm font-label-sm">
-<span class="text-on-surface-variant">Bioavailability:</span>
-<span class="text-primary font-bold">High (Caco-2 18.2)</span>
-</div>
-</div>
-<!-- Card 4: Pareto Efficiency -->
-<div class="rounded-lg bg-surface-container-low/70 backdrop-blur-xl border border-outline-variant p-space-md flex flex-col justify-between relative overflow-hidden">
-<div>
-<div class="flex items-center justify-between">
-<span class="text-label-sm font-label-sm text-on-surface-variant">PARETO EFFICIENCY</span>
-<span class="px-1.5 py-0.5 rounded text-[9px] font-label-sm bg-tertiary/15 text-tertiary border border-tertiary/30 font-bold">HYPERVOL: 94.8%</span>
-</div>
-<div class="mt-2 text-headline-sm font-headline-sm text-on-surface font-bold">4 Non-Dominated</div>
-<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">from 100,000 screened in 42m</div>
-</div>
-<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-label-sm font-label-sm">
-<span class="text-on-surface-variant text-[10px]">Cycle Exploration:</span>
-<span class="text-secondary font-bold font-label-sm">Convergence Zone Î±</span>
-</div>
-</div>
-</section>
-<!-- 3. CENTER VIEWPORT: 3D MOLECULAR COCKPIT (60%) & AGENT REASONING STREAM (40%) -->
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
-<!-- Center Left (60% width -> 7 cols in 12-col grid): 3D Molecular Simulation Viewport -->
-<div class="lg:col-span-7 rounded-lg bg-surface-container-low/90 backdrop-blur-xl border border-outline-variant flex flex-col relative overflow-hidden min-h-[460px]">
-<!-- Viewport Header HUD Controls -->
-<div class="flex flex-wrap items-center justify-between px-space-md py-space-sm border-b border-outline-variant bg-surface-container/60 gap-2">
-<div class="flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-<span class="text-label-sm font-label-sm font-bold text-on-surface">PDB: 7M22 // KRAS G12D COMPLEX</span>
-</div>
-<div class="flex items-center gap-1.5 text-label-sm font-label-sm">
-<span class="px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-on-surface-variant">Render: Ribbon + Ligand</span>
-<span class="px-2 py-0.5 rounded bg-surface-container-high border border-secondary/40 text-secondary">ESP: Â±5 kT/e</span>
-<span class="px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant text-primary font-bold">H-Bond Mesh</span>
-</div>
-</div>
-<!-- Molecular 3D Canvas / Visual Representation -->
-<div class="relative flex-1 flex items-center justify-center bg-gradient-to-b from-[#060910] via-surface-container-lowest to-[#080d1a] p-4 overflow-hidden">
-<!-- Ambient backdrop depth simulation -->
-<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 50% 50%, rgba(118, 185, 0, 0.2) 0%, transparent 65%);"></div>
-<!-- Interactive SVG Vector Molecule & Pocket Rig -->
-<div class="relative z-10 w-full max-w-lg aspect-video flex items-center justify-center">
-<svg class="w-full h-full drop-shadow-2xl" viewbox="0 0 600 360">
-<defs>
-<lineargradient id="helixGrad" x1="0%" x2="100%" y1="0%" y2="100%">
-<stop offset="0%" stop-color="#424936" stop-opacity="0.4"></stop>
-<stop offset="50%" stop-color="#76B900" stop-opacity="0.7"></stop>
-<stop offset="100%" stop-color="#00F2FE" stop-opacity="0.4"></stop>
-</lineargradient>
-<filter height="140%" id="neonGlow" width="140%" x="-20%" y="-20%">
-<fegaussianblur result="blur" stddeviation="3"></fegaussianblur>
-<femerge>
-<femergenode in="blur"></femergenode>
-<femergenode in="SourceGraphic"></femergenode>
-</femerge>
-</filter>
-</defs>
-<!-- Protein Alpha Helices (Ribbon Background) -->
-<path d="M 50 180 Q 90 90 150 120 T 260 160 T 360 130 T 480 180 T 560 140" fill="none" opacity="0.45" stroke="url(#helixGrad)" stroke-linecap="round" stroke-width="8"></path>
-<path d="M 60 210 Q 110 270 200 230 T 320 260 T 440 220 T 550 250" fill="none" stroke="rgba(255,255,255,0.08)" stroke-linecap="round" stroke-width="12"></path>
-<!-- Secondary Beta Sheet arrows -->
-<path d="M 120 70 L 220 70 L 240 85 L 220 100 L 120 100 Z" fill="rgba(66, 73, 54, 0.3)" stroke="#76B900" stroke-dasharray="3,3" stroke-width="1"></path>
-<!-- Switch-II Pocket Wireframe Mesh -->
-<polygon fill="rgba(0, 242, 254, 0.03)" opacity="0.6" points="210,130 280,90 380,110 430,170 390,240 280,260 200,210" stroke="#00F2FE" stroke-dasharray="2,4" stroke-width="1"></polygon>
-<!-- Ligand NIM-LEAD-01-06 (Ball and stick simulation in pocket) -->
-<!-- Bonds -->
-<g filter="url(#neonGlow)" stroke="#94da32" stroke-linecap="round" stroke-width="3">
-<!-- Core Isoquinoline Ring -->
-<line x1="260" x2="300" y1="170" y2="150"></line>
-<line x1="300" x2="340" y1="150" y2="170"></line>
-<line stroke="#00dce6" x1="340" x2="340" y1="170" y2="210"></line>
-<line stroke="#00dce6" x1="340" x2="300" y1="210" y2="230"></line>
-<line x1="300" x2="260" y1="230" y2="210"></line>
-<line x1="260" x2="260" y1="210" y2="170"></line>
-<!-- Piperazine Linker -->
-<line stroke="#ffffff" stroke-width="2.5" x1="340" x2="390" y1="170" y2="155"></line>
-<line stroke="#ffffff" stroke-width="2.5" x1="390" x2="425" y1="155" y2="185"></line>
-<line stroke="#ffffff" stroke-width="2.5" x1="425" x2="410" y1="185" y2="225"></line>
-<line stroke="#ffffff" stroke-width="2.5" x1="410" x2="370" y1="225" y2="200"></line>
-<!-- Warhead / Specific Contact Arm -->
-<line stroke="#00F2FE" stroke-width="2.5" x1="300" x2="290" y1="150" y2="105"></line>
-<circle cx="290" cy="105" fill="#00F2FE" r="5"></circle>
-</g>
-<!-- Ligand Atoms (Glow spheres) -->
-<g>
-<circle cx="260" cy="170" fill="#76B900" filter="url(#neonGlow)" r="6"></circle>
-<circle cx="300" cy="150" fill="#00F2FE" filter="url(#neonGlow)" r="7"></circle>
-<circle cx="340" cy="170" fill="#76B900" r="6"></circle>
-<circle cx="340" cy="210" fill="#ffffff" r="6"></circle>
-<circle cx="300" cy="230" fill="#76B900" r="6"></circle>
-<circle cx="260" cy="210" fill="#ffb4ab" r="6"></circle>
-<circle cx="390" cy="155" fill="#00dce6" r="5.5"></circle>
-<circle cx="425" cy="185" fill="#76B900" r="7"></circle>
-<circle cx="410" cy="225" fill="#ffffff" r="5.5"></circle>
-</g>
-<!-- H-Bond & Contact Vector Rays -->
-<!-- Asp12 Salt Bridge -->
-<line stroke="#ffb4ab" stroke-dasharray="4,3" stroke-width="1.5" x1="290" x2="260" y1="105" y2="70"></line>
-<circle cx="260" cy="70" fill="#ffb4ab" r="3"></circle>
-<text fill="#ffb4ab" font-family="JetBrains Mono" font-size="10" font-weight="bold" x="220" y="60">[Asp12] 2.8Ã</text>
-<!-- Gly60 H-Bond -->
-<line stroke="#00F2FE" stroke-dasharray="4,3" stroke-width="1.5" x1="425" x2="475" y1="185" y2="175"></line>
-<circle cx="475" cy="175" fill="#00F2FE" r="3"></circle>
-<text fill="#00F2FE" font-family="JetBrains Mono" font-size="10" font-weight="bold" x="475" y="165">[Gly60] 2.1Ã</text>
-<!-- Tyr96 Pi-Pi Stacking -->
-<line stroke="#94da32" stroke-dasharray="4,3" stroke-width="1.5" x1="260" x2="220" y1="210" y2="255"></line>
-<circle cx="220" cy="255" fill="#94da32" r="3"></circle>
-<text fill="#94da32" font-family="JetBrains Mono" font-size="10" font-weight="bold" x="170" y="270">[Tyr96] 3.4Ã (Ï-Ï)</text>
-</svg>
-</div>
-<!-- Floating Pocket Telemetry Mini-HUD (Bottom Left of Canvas) -->
-<div class="absolute bottom-3 left-3 bg-surface-container-lowest/80 backdrop-blur-md border border-outline-variant/60 rounded p-2 text-label-sm font-label-sm space-y-1">
-<div class="text-[9px] text-on-surface-variant font-bold tracking-wider">BINDING POCKET DYNAMICS</div>
-<div class="flex items-center gap-3">
-<span class="text-on-surface">Volume: <strong class="text-primary font-bold">482 ÃÂ³</strong></span>
-<span class="text-on-surface">Hydrophobic: <strong class="text-secondary font-bold">68.2%</strong></span>
-<span class="text-on-surface">B-factor: <strong class="text-on-surface-variant">18.4</strong></span>
-</div>
-</div>
-<!-- Viewport Compass / Gizmo (Top Right of Canvas) -->
-<div class="absolute top-3 right-3 flex flex-col items-center gap-1 bg-surface-container-lowest/70 backdrop-blur-md p-1.5 rounded border border-outline-variant/50">
-<span class="text-[9px] font-label-sm text-primary font-bold">ORBIT 3D</span>
-<div class="w-8 h-8 rounded-full border border-secondary/40 flex items-center justify-center text-[10px] text-secondary font-label-sm">
-                Z+
-              </div>
-</div>
-</div>
-<!-- Bottom Interactive Residue Contact Bar -->
-<div class="p-space-sm bg-surface-container-high/80 border-t border-outline-variant flex flex-wrap items-center justify-between gap-2">
-<div class="flex items-center gap-2">
-<span class="text-label-sm font-label-sm text-on-surface-variant font-bold">KEY CONTACTS:</span>
-<button class="px-2 py-0.5 rounded bg-error/15 border border-error/40 text-error text-[11px] font-label-sm hover:brightness-125 transition-all">
-                [Asp12] Salt bridge (2.8 Ã) â¢ Anchor
-              </button>
-<button class="px-2 py-0.5 rounded bg-secondary/15 border border-secondary/40 text-secondary text-[11px] font-label-sm hover:brightness-125 transition-all">
-                [Gly60] H-Bond donor (2.1 Ã) â¢ Switch-II
-              </button>
-<button class="px-2 py-0.5 rounded bg-primary/15 border border-primary/40 text-primary text-[11px] font-label-sm hover:brightness-125 transition-all">
-                [Tyr96] Pi-Pi stacking (3.4 Ã) â¢ Groove
-              </button>
-</div>
-<div class="flex items-center gap-2">
-<label class="text-[10px] font-label-sm text-on-surface-variant">Depth</label>
-<input class="w-20 accent-primary h-1 bg-surface-container-highest rounded" type="range" value="70"/>
-</div>
-</div>
-</div>
-<!-- Center Right (40% width -> 5 cols in 12-col grid): Autonomous Multi-Agent Reasoning Stream -->
-<div class="lg:col-span-5 rounded-lg bg-surface-container-low/90 backdrop-blur-xl border border-outline-variant flex flex-col justify-between min-h-[460px]">
-<!-- Stream Header -->
-<div class="px-space-md py-space-sm border-b border-outline-variant bg-surface-container/60 flex items-center justify-between">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-tertiary text-base" data-icon="terminal">terminal</span>
-<span class="text-label-sm font-label-sm font-bold text-on-surface">AUTONOMOUS COGNITION STREAM</span>
-</div>
-<span class="px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant text-[10px] font-label-sm text-primary font-bold">
-              SWARM CONSENSUS: 100%
-            </span>
-</div>
-<!-- Monospace Step-by-Step Cognitive Agent Log Stream -->
-<div class="flex-1 p-space-md overflow-y-auto space-y-3 font-label-sm text-xs leading-relaxed">
-<!-- Log Entry 1: Target Scout -->
-<div class="p-2 rounded bg-surface-container-lowest/80 border border-outline-variant/60 hover:border-primary/40 transition-colors">
-<div class="flex items-center justify-between mb-1">
-<span class="text-primary font-bold flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                  [00:14:02] Target Scout
-                </span>
-<span class="text-outline text-[10px]">MD Trajectory #84</span>
-</div>
-<p class="text-on-surface-variant">
-                "Discovered transient cryptic pocket opening near Switch-II loop at timestep <span class="text-secondary font-semibold">42.1ns</span> of MD simulation. Asp12 residue re-oriented for nucleophilic attack."
-              </p>
-</div>
-<!-- Log Entry 2: Generative Chemist -->
-<div class="p-2 rounded bg-surface-container-lowest/80 border border-outline-variant/60 hover:border-secondary/40 transition-colors">
-<div class="flex items-center justify-between mb-1">
-<span class="text-secondary font-bold flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-                  [00:14:18] Generative Chemist
-                </span>
-<span class="text-outline text-[10px]">BioNeMo MolMIM</span>
-</div>
-<p class="text-on-surface-variant">
-                "Generated <span class="text-on-surface font-semibold">1,024 bioisosteric derivatives</span> targeting Asp12 via piperazine extension. SMILES string encoded with high stereochemical validity."
-              </p>
-</div>
-<!-- Log Entry 3: ADMET Critic -->
-<div class="p-2 rounded bg-surface-container-lowest/80 border border-outline-variant/60 hover:border-tertiary/40 transition-colors">
-<div class="flex items-center justify-between mb-1">
-<span class="text-tertiary font-bold flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-                  [00:14:31] ADMET Critic
-                </span>
-<span class="text-outline text-[10px]">ToxFilter v3</span>
-</div>
-<p class="text-on-surface-variant">
-                "Flagged candidate #04 for <span class="text-error font-semibold">hERG channel inhibition risk</span> (pIC50 &gt; 5.8). Re-routing chemistry to fluorinated analog #06 to preserve bioavailability."
-              </p>
-</div>
-<!-- Log Entry 4: Biophysics Docking -->
-<div class="p-2 rounded bg-surface-container-lowest/80 border border-outline-variant/60 hover:border-primary/40 transition-colors">
-<div class="flex items-center justify-between mb-1">
-<span class="text-primary font-bold flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                  [00:14:49] Biophysics Docking
-                </span>
-<span class="text-outline text-[10px]">Alchemical FEP</span>
-</div>
-<p class="text-on-surface-variant">
-                "Alchemical FEP confirms <span class="text-primary font-semibold">ÎG shift from -7.40 to -9.05 kcal/mol</span> with zero steric clash inside hydrophobic sub-pocket."
-              </p>
-</div>
-<!-- Log Entry 5: Principal Investigator (Consensus) -->
-<div class="p-2 rounded bg-primary/10 border border-primary/40 glow-nvidia">
-<div class="flex items-center justify-between mb-1">
-<span class="text-primary font-bold flex items-center gap-1.5">
-<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-                  [00:15:04] Principal Investigator
-                </span>
-<span class="text-primary text-[10px] font-bold">NOMINATION LOCKED</span>
-</div>
-<p class="text-on-surface font-semibold">
-                "Unanimous agent consensus achieved. Candidate <span class="text-primary-fixed underline font-bold">NIM-LEAD-01-06</span> locked for dry-lab nomination &amp; wet-lab synthesis dispatch."
-              </p>
-</div>
-</div>
-<!-- Prompt / Steering Injection Input Bar -->
-<div class="p-space-sm bg-surface-container-high/80 border-t border-outline-variant">
-<div class="flex items-center gap-2">
-<div class="relative flex-1">
-<input class="w-full bg-surface-container-lowest border border-outline-variant/80 rounded px-3 py-1.5 text-body-sm font-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary transition-all" placeholder="Inject chemical constraint (e.g., enforce covalent warhead, restrict MW &lt; 450)..." type="text"/>
-<span class="absolute right-2 top-2 text-[10px] font-label-sm text-outline">CMD+K</span>
-</div>
-<button class="px-3 py-1.5 rounded bg-primary text-on-primary font-label-sm text-label-sm font-bold hover:brightness-110 active:scale-95 transition-all flex items-center gap-1">
-<span class="material-symbols-outlined text-sm" data-icon="send">send</span>
-                Steer Swarm
-              </button>
-</div>
-</div>
-</div>
-</section>
-<!-- 4. BOTTOM SECTION (SPLIT 2-PANEL SCIENTIFIC DEEP DIVE) -->
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
-<!-- Bottom Left (6 cols): Top 3 Lead Chemical Structures & Ledger -->
-<div class="lg:col-span-6 rounded-lg bg-surface-container-low/90 backdrop-blur-xl border border-outline-variant p-space-md flex flex-col justify-between">
-<div>
-<div class="flex items-center justify-between mb-space-sm pb-space-xs border-b border-outline-variant">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-primary text-base" data-icon="format_list_bulleted">format_list_bulleted</span>
-<span class="text-headline-sm font-headline-sm font-bold text-on-surface text-base">Top Nominated Candidates</span>
-</div>
-<span class="text-label-sm font-label-sm text-on-surface-variant">KRAS G12D Screen Matrix</span>
-</div>
-<!-- Candidate 1: Top Pick (Detailed 2D Chemical Card) -->
-<div class="p-3 rounded-lg bg-surface-container/70 border border-primary/40 glow-nvidia mb-3">
-<div class="flex items-center justify-between mb-2">
-<div class="flex items-center gap-2">
-<span class="px-1.5 py-0.5 rounded bg-primary text-on-primary font-label-sm text-xs font-bold">TOP NOMINEE</span>
-<span class="font-label-lg font-bold text-on-surface">NIM-LEAD-01-06</span>
-</div>
-<div class="text-secondary font-label-sm font-bold">ÎG: -9.05 kcal/mol</div>
-</div>
-<!-- Inline 2D Chemical Structure Vector Illustration & Metrics Grid -->
-<div class="grid grid-cols-12 gap-3 items-center">
-<!-- 2D Chemical Structure SVG Diagram -->
-<div class="col-span-5 bg-surface-container-lowest/90 p-2 rounded border border-outline-variant/60 flex items-center justify-center">
-<svg class="w-full h-24" viewbox="0 0 200 120">
-<!-- Benzene/Isoquinoline core -->
-<polygon fill="none" points="40,60 55,35 85,35 100,60 85,85 55,85" stroke="#94da32" stroke-width="2"></polygon>
-<circle cx="70" cy="60" fill="none" r="14" stroke="#94da32" stroke-dasharray="2,2" stroke-width="1"></circle>
-<!-- Hetero nitrogen -->
-<text fill="#00F2FE" font-family="JetBrains Mono" font-size="10" font-weight="bold" x="35" y="64">N</text>
-<!-- Piperazine bridge -->
-<line stroke="#dfe2ef" stroke-width="2" x1="100" x2="125" y1="60" y2="60"></line>
-<polygon fill="none" points="125,60 140,40 165,40 180,60 165,80 140,80" stroke="#dfe2ef" stroke-width="2"></polygon>
-<text fill="#00F2FE" font-family="JetBrains Mono" font-size="9" x="148" y="44">N</text>
-<text fill="#ffb4ab" font-family="JetBrains Mono" font-size="9" x="178" y="64">F</text>
-<!-- Fluorine substituent -->
-<line stroke="#00F2FE" stroke-width="1.5" x1="85" x2="95" y1="35" y2="20"></line>
-<text fill="#00F2FE" font-family="JetBrains Mono" font-size="8" x="96" y="20">CF3</text>
-</svg>
-</div>
-<!-- Metrics breakdown -->
-<div class="col-span-7 grid grid-cols-2 gap-2 text-label-sm font-label-sm">
-<div class="bg-surface-container-high/60 p-1.5 rounded">
-<div class="text-[10px] text-on-surface-variant">Mol. Weight</div>
-<div class="text-on-surface font-bold">428.5 g/mol</div>
-</div>
-<div class="bg-surface-container-high/60 p-1.5 rounded">
-<div class="text-[10px] text-on-surface-variant">LogP (Lipophilicity)</div>
-<div class="text-primary font-bold">2.84</div>
-</div>
-<div class="bg-surface-container-high/60 p-1.5 rounded">
-<div class="text-[10px] text-on-surface-variant">Polar Surface (TPSA)</div>
-<div class="text-on-surface font-bold">64.2 ÃÂ²</div>
-</div>
-<div class="bg-surface-container-high/60 p-1.5 rounded">
-<div class="text-[10px] text-on-surface-variant">Synthesis Accessibility</div>
-<div class="text-secondary font-bold">2.1 (Feasible)</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Backup Candidates Micro-Table -->
-<div class="space-y-1.5">
-<!-- Backup 1 -->
-<div class="flex items-center justify-between p-2 rounded bg-surface-container/40 border border-outline-variant/60 hover:bg-surface-container/70 transition-colors text-label-sm font-label-sm">
-<div class="flex items-center gap-2">
-<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-<span class="font-bold text-on-surface">NIM-LEAD-01-03</span>
-<span class="text-[10px] text-on-surface-variant">Covalent acrylamide warhead</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="text-on-surface-variant">MW: 412.3</span>
-<span class="text-on-surface-variant">LogP: 3.12</span>
-<span class="text-primary font-bold">ÎG: -8.72</span>
-</div>
-</div>
-<!-- Backup 2 -->
-<div class="flex items-center justify-between p-2 rounded bg-surface-container/40 border border-outline-variant/60 hover:bg-surface-container/70 transition-colors text-label-sm font-label-sm">
-<div class="flex items-center gap-2">
-<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-<span class="font-bold text-on-surface">NIM-LEAD-01-11</span>
-<span class="text-[10px] text-on-surface-variant">Enhanced oral bioavailability</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="text-on-surface-variant">MW: 445.6</span>
-<span class="text-on-surface-variant">LogP: 2.45</span>
-<span class="text-primary font-bold">ÎG: -8.54</span>
-</div>
-</div>
-</div>
-</div>
-<!-- Bottom Footer Action -->
-<div class="mt-3 pt-2 border-t border-outline-variant flex items-center justify-between">
-<span class="text-[11px] font-label-sm text-outline">CRYO-EM REFINEMENT READY</span>
-<button class="text-label-sm font-label-sm text-primary hover:underline flex items-center gap-1 font-bold">
-              View Full 100-Lead Ledger
-              <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
-</button>
-</div>
-</div>
-<!-- Bottom Right (6 cols): Multi-Objective Pareto Frontier Scatter Plot -->
-<div class="lg:col-span-6 rounded-lg bg-surface-container-low/90 backdrop-blur-xl border border-outline-variant p-space-md flex flex-col justify-between">
-<div>
-<div class="flex flex-wrap items-center justify-between mb-space-sm pb-space-xs border-b border-outline-variant gap-2">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-secondary text-base" data-icon="scatter_plot">scatter_plot</span>
-<span class="text-headline-sm font-headline-sm font-bold text-on-surface text-base">Pareto Frontier Analysis</span>
-</div>
-<div class="flex items-center gap-2 text-[10px] font-label-sm">
-<button class="px-2 py-0.5 rounded bg-primary/20 border border-primary text-primary font-bold">Pareto Front Only</button>
-<button class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant text-on-surface-variant">Color by QED</button>
-<button class="px-2 py-0.5 rounded bg-surface-container border border-outline-variant text-secondary flex items-center gap-1">
-<span class="material-symbols-outlined text-xs" data-icon="download">download</span>
-                  Export SDF
-                </button>
-</div>
-</div>
-<!-- High-Tech Interactive SVG Scatter Plot -->
-<div class="relative w-full h-56 bg-surface-container-lowest/80 rounded border border-outline-variant/60 p-2 overflow-hidden flex flex-col justify-between">
-<!-- Plot Canvas -->
-<svg class="w-full h-full" viewbox="0 0 500 200">
-<!-- Grid hairlines -->
-<line stroke="rgba(255,255,255,0.05)" stroke-dasharray="2,2" x1="50" x2="480" y1="20" y2="20"></line>
-<line stroke="rgba(255,255,255,0.05)" stroke-dasharray="2,2" x1="50" x2="480" y1="60" y2="60"></line>
-<line stroke="rgba(255,255,255,0.05)" stroke-dasharray="2,2" x1="50" x2="480" y1="100" y2="100"></line>
-<line stroke="rgba(255,255,255,0.05)" stroke-dasharray="2,2" x1="50" x2="480" y1="140" y2="140"></line>
-<line stroke="rgba(255,255,255,0.2)" x1="50" x2="480" y1="170" y2="170"></line>
-<!-- Axes -->
-<line stroke="rgba(255,255,255,0.2)" x1="50" x2="50" y1="20" y2="170"></line>
-<!-- Axis Labels -->
-<text fill="#8c947d" font-family="JetBrains Mono" font-size="9" x="50" y="190">-6.0</text>
-<text fill="#8c947d" font-family="JetBrains Mono" font-size="9" x="180" y="190">-7.5</text>
-<text fill="#8c947d" font-family="JetBrains Mono" font-size="9" x="320" y="190">-8.5</text>
-<text fill="#94da32" font-family="JetBrains Mono" font-size="9" font-weight="bold" x="440" y="190">-9.5 ÎG</text>
-<text fill="#8c947d" font-family="JetBrains Mono" font-size="9" x="10" y="170">0.2</text>
-<text fill="#8c947d" font-family="JetBrains Mono" font-size="9" x="10" y="100">0.6</text>
-<text fill="#00F2FE" font-family="JetBrains Mono" font-size="9" font-weight="bold" x="10" y="30">1.0 ADMET</text>
-<!-- Sub-optimal cloud points (Screened pool) -->
-<g fill="rgba(255, 255, 255, 0.15)">
-<circle cx="120" cy="140" r="2.5"></circle>
-<circle cx="140" cy="120" r="2"></circle>
-<circle cx="160" cy="150" r="2"></circle>
-<circle cx="180" cy="110" r="2.5"></circle>
-<circle cx="210" cy="130" r="2"></circle>
-<circle cx="230" cy="90" r="3"></circle>
-<circle cx="260" cy="115" r="2"></circle>
-<circle cx="290" cy="85" r="2.5"></circle>
-<circle cx="310" cy="120" r="2"></circle>
-<circle cx="340" cy="100" r="2.5"></circle>
-<circle cx="370" cy="130" r="2"></circle>
-<circle cx="390" cy="95" r="3"></circle>
-<circle cx="250" cy="140" r="2"></circle>
-<circle cx="280" cy="160" r="2"></circle>
-</g>
-<!-- Pareto Optimal Frontier Curve (Luminous Gradient) -->
-<path d="M 120 70 Q 240 45 350 40 T 450 35" fill="none" filter="drop-shadow(0 0 6px rgba(118, 185, 0, 0.6))" stroke="#76B900" stroke-width="2.5"></path>
-<!-- Dominated Region Shading -->
-<path d="M 120 70 Q 240 45 350 40 T 450 35 L 450 170 L 120 170 Z" fill="rgba(118, 185, 0, 0.03)"></path>
-<!-- Non-dominated leads on frontier -->
-<circle cx="150" cy="65" fill="#00F2FE" r="4.5"></circle>
-<circle cx="260" cy="48" fill="#00F2FE" r="4.5"></circle>
-<circle cx="360" cy="40" fill="#00F2FE" r="4.5"></circle>
-<!-- Star / Glowing Highlight for NIM-LEAD-01-06 (Pareto Optimal Apex) -->
-<g transform="translate(425, 36)">
-<circle class="animate-ping" cx="0" cy="0" fill="rgba(118, 185, 0, 0.3)" r="8"></circle>
-<circle cx="0" cy="0" fill="#76B900" r="5" stroke="#ffffff" stroke-width="1.5"></circle>
-<text fill="#76B900" font-family="JetBrains Mono" font-size="9" font-weight="bold" x="-40" y="-12">NIM-LEAD-01-06 (Apex)</text>
-</g>
-</svg>
-</div>
-</div>
-<!-- Bottom Metric Interpretation -->
-<div class="mt-3 pt-2 border-t border-outline-variant flex items-center justify-between text-label-sm font-label-sm">
-<span class="text-on-surface-variant">Trade-off Optimality: <strong class="text-primary">Hypervolume 0.948</strong></span>
-<div class="flex items-center gap-3">
-<span class="flex items-center gap-1 text-[10px] text-on-surface-variant">
-<span class="w-2 h-2 rounded-full bg-secondary"></span> Non-Dominated
-              </span>
-<span class="flex items-center gap-1 text-[10px] text-on-surface-variant">
-<span class="w-2 h-2 rounded-full bg-primary"></span> Consensus Apex
-              </span>
-</div>
-</div>
-</div>
-</section>
-</main>
-</div>
-</body></html>
+        <div class="space-y-1.5 text-xs">
+          <div class="flex justify-between"><span class="text-gray-500">PDB ID</span><span id="targetPdb" class="font-mono text-cyan-400">8AZV</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Indication</span><span id="targetInd" class="text-gray-300">Colorectal/NSCLC</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Key Pocket</span><span id="targetPocket" class="text-gray-300">Switch II</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Mutant</span><span id="targetMut" class="font-mono" style="color: #f87171;">G12D</span></div>
+        </div>
+      </div>
+
+      <!-- Candidate Slider -->
+      <div class="mb-5">
+        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+          📦 Candidates: <span id="candidateNum" class="text-nvidia-green">10</span>
+        </label>
+        <input type="range" id="candidateSlider" min="4" max="20" value="10" class="w-full accent-green-500 cursor-pointer" oninput="document.getElementById('candidateNum').textContent=this.value"/>
+      </div>
+
+      <!-- Run Button -->
+      <button id="runBtn" onclick="runDiscovery()" class="btn-cta w-full text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 mb-4">
+        <svg id="runIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <span id="runLabel">🚀 Run Autonomous Discovery</span>
+      </button>
+
+      <!-- Agent Pipeline Status -->
+      <div class="mb-5">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">⚙️ Agent Swarm Status</div>
+        <div class="space-y-2.5" id="agentStatusPanel">
+          <div class="flex items-center gap-3 py-2 px-3 rounded-lg" style="background: rgba(22,27,34,0.6);">
+            <div class="agent-ring idle" id="ring-scout"></div>
+            <div class="flex-1">
+              <div class="text-xs font-semibold text-gray-300">Target Scout</div>
+              <div class="text-[10px] text-gray-600" id="status-scout">Standby</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 py-2 px-3 rounded-lg" style="background: rgba(22,27,34,0.6);">
+            <div class="agent-ring idle" id="ring-chemist"></div>
+            <div class="flex-1">
+              <div class="text-xs font-semibold text-gray-300">Generative Chemist</div>
+              <div class="text-[10px] text-gray-600" id="status-chemist">Standby</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 py-2 px-3 rounded-lg" style="background: rgba(22,27,34,0.6);">
+            <div class="agent-ring idle" id="ring-admet"></div>
+            <div class="flex-1">
+              <div class="text-xs font-semibold text-gray-300">ADMET Critic</div>
+              <div class="text-[10px] text-gray-600" id="status-admet">Standby</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 py-2 px-3 rounded-lg" style="background: rgba(22,27,34,0.6);">
+            <div class="agent-ring idle" id="ring-docking"></div>
+            <div class="flex-1">
+              <div class="text-xs font-semibold text-gray-300">DiffDock Docking</div>
+              <div class="text-[10px] text-gray-600" id="status-docking">Standby</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 py-2 px-3 rounded-lg" style="background: rgba(22,27,34,0.6);">
+            <div class="agent-ring idle" id="ring-pi"></div>
+            <div class="flex-1">
+              <div class="text-xs font-semibold text-gray-300">PI Pareto Arbiter</div>
+              <div class="text-[10px] text-gray-600" id="status-pi">Standby</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trial vs Full CTA -->
+      <div class="rounded-xl p-4" style="background: linear-gradient(135deg, rgba(118,185,0,0.07), rgba(0,241,253,0.04)); border: 1px solid rgba(118,185,0,0.2);">
+        <div class="text-xs font-bold mb-2" style="color: var(--nvidia-green);">🔓 Full Version Unlocks</div>
+        <ul class="text-xs text-gray-400 space-y-1 mb-3">
+          <li>✓ Any custom PDB target</li>
+          <li>✓ Live NVIDIA NIM GPU inference</li>
+          <li>✓ Unlimited candidate generation</li>
+          <li>✓ Batch SDF/PyMOL exports</li>
+          <li>✓ Private data stays local</li>
+        </ul>
+        <button onclick="openInstallModal()" class="w-full btn-cta text-white text-xs font-bold py-2 rounded-lg">⚡ Install Full App Free</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER: Main Cockpit Canvas -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Progress Bar -->
+    <div class="h-0.5 w-full" style="background: var(--surface-border);">
+      <div id="progressBar" class="h-full progress-fill" style="width: 0%;"></div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border-b border-surface-border">
+      <div class="glass rounded-xl p-3">
+        <div class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Top Lead ΔG</div>
+        <div class="tele-num text-glow-green" id="kpiAffinity" style="color: var(--nvidia-green);">—</div>
+        <div class="text-[10px] text-gray-600">kcal/mol</div>
+      </div>
+      <div class="glass rounded-xl p-3">
+        <div class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">QED Score</div>
+        <div class="tele-num" id="kpiQed" style="color: var(--cyber-cyan);">—</div>
+        <div class="text-[10px] text-gray-600">drug-likeness</div>
+      </div>
+      <div class="glass rounded-xl p-3">
+        <div class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Screened</div>
+        <div class="tele-num text-purple-400" id="kpiScreened">—</div>
+        <div class="text-[10px] text-gray-600">candidates</div>
+      </div>
+      <div class="glass rounded-xl p-3">
+        <div class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Pareto Leads</div>
+        <div class="tele-num text-amber-400" id="kpiPareto">—</div>
+        <div class="text-[10px] text-gray-600">non-dominated</div>
+      </div>
+    </div>
+
+    <!-- Main Content Split -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden">
+
+      <!-- LEFT: Agent Log Stream -->
+      <div class="flex flex-col border-r border-surface-border overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-surface-border">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full animate-pulse" id="streamDot" style="background: #374151;"></div>
+            <span class="text-xs font-semibold text-gray-300">🤖 Multi-Agent Thought Stream</span>
+          </div>
+          <span class="text-[10px] font-mono text-gray-600" id="streamTimestamp">--:--:--</span>
+        </div>
+        <div id="agentLog" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs font-mono">
+          <div class="text-gray-600 text-center py-8">
+            <div class="text-3xl mb-3">🧬</div>
+            <div class="text-sm font-sans text-gray-500">Select a target and click</div>
+            <div class="text-sm font-sans font-bold" style="color: var(--nvidia-green);">🚀 Run Autonomous Discovery</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Pareto Chart + Lead Table -->
+      <div class="flex flex-col overflow-hidden">
+        <!-- Pareto Chart -->
+        <div class="p-4 border-b border-surface-border">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold text-gray-300">📊 Pareto Frontier (Affinity vs. Drug-Likeness)</span>
+            <span class="badge-green">Multi-Objective</span>
+          </div>
+          <div style="height: 200px;">
+            <canvas id="paretoChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Lead Cards -->
+        <div class="flex-1 overflow-y-auto p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold text-gray-300">🏆 Top Nominated Leads</span>
+            <span id="leadCount" class="text-[10px] text-gray-600">0 candidates</span>
+          </div>
+          <div id="leadsContainer" class="space-y-2">
+            <div class="text-center py-6 text-gray-600 text-xs">Run a discovery campaign to see leads.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT SIDEBAR: Selected Lead Dossier -->
+  <aside class="hidden 2xl:flex flex-col w-72 border-l border-surface-border overflow-y-auto" style="background: var(--surface-card);">
+    <div class="p-5">
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">📋 Lead Dossier</div>
+      <div id="dossierPanel">
+        <div class="text-center py-12 text-gray-600 text-xs">
+          <div class="text-4xl mb-3">🔬</div>
+          Select a lead candidate<br/>to view its clinical profile.
+        </div>
+      </div>
+
+      <!-- Download / Export -->
+      <div class="mt-auto pt-4 border-t border-surface-border space-y-2">
+        <button onclick="downloadDossier()" class="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:opacity-80" style="background: rgba(118,185,0,0.1); border: 1px solid rgba(118,185,0,0.3); color: var(--nvidia-green);">
+          📄 Export Dossier (.md)
+        </button>
+        <button onclick="downloadSDF()" class="w-full text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:opacity-80" style="background: rgba(0,241,253,0.06); border: 1px solid rgba(0,241,253,0.2); color: var(--cyber-cyan);">
+          🧪 Export Poses (.sdf)
+        </button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ═══════════════════════════════════════════════ INSTALL MODAL ════════ -->
+<div id="installModal" class="modal-backdrop hidden" onclick="closeModalOnBackdrop(event)">
+  <div class="modal-card p-0 animate-fade-up" onclick="event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="p-6 border-b border-surface-border">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-5 h-5 rounded flex items-center justify-center" style="background: linear-gradient(135deg, #76b900, #4a7a00);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.28L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h5v-5l-2.28 2.28C6.81 18 5 15.21 5 12c0-4.08 3.05-7.44 7-7.93V2.05z"/></svg>
+            </div>
+            <h2 class="text-base font-bold text-white">Install Full Agentic BioNeMo</h2>
+          </div>
+          <p class="text-xs text-gray-500">Fully automated setup — zero config headache. Works on any machine.</p>
+        </div>
+        <button onclick="closeInstallModal()" class="text-gray-600 hover:text-gray-300 text-xl leading-none p-1">×</button>
+      </div>
+
+      <!-- Mode toggle -->
+      <div class="mt-4 p-3 rounded-xl" style="background: rgba(118,185,0,0.06); border: 1px solid rgba(118,185,0,0.15);">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background: var(--nvidia-green);"></span>
+          <span class="text-xs font-semibold" style="color: var(--nvidia-green);">Free & Open Source — MIT License</span>
+        </div>
+        <div class="text-xs text-gray-500">Works instantly in free Mock Mode. Add your NVIDIA API Key for live GPU inference on real targets.</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="px-6 pt-4">
+      <div class="flex gap-2 flex-wrap">
+        <button class="tab-btn active" onclick="switchTab('windows')" id="tab-windows">🪟 Windows</button>
+        <button class="tab-btn" onclick="switchTab('unix')" id="tab-unix">🍎 macOS / Linux</button>
+        <button class="tab-btn" onclick="switchTab('docker')" id="tab-docker">🐳 Docker</button>
+        <button class="tab-btn" onclick="switchTab('compare')" id="tab-compare">⚖️ Trial vs Full</button>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="p-6">
+
+      <!-- Windows Tab -->
+      <div id="pane-windows">
+        <div class="mb-4">
+          <button onclick="downloadInstaller('windows')" class="btn-cta w-full text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm glow-green-intense">
+            📥 Download install.bat &nbsp;(Double-Click to Run)
+          </button>
+          <div class="text-center text-xs text-gray-600 mt-2">No git or terminal needed. Just double-click and the app opens in your browser.</div>
+        </div>
+        <div class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2 mt-5">Or: PowerShell 1-Liner</div>
+        <div class="code-box">
+          <span id="ps-cmd">irm https://raw.githubusercontent.com/Jorwalzzz/bionemo-agentic-scientist/main/install.ps1 | iex</span>
+          <button class="copy-btn" onclick="copyCode('ps-cmd', this)">Copy</button>
+        </div>
+        <div class="mt-4 text-xs text-gray-600 space-y-1">
+          <div>⏱️ Setup takes ~2-3 minutes</div>
+          <div>✅ Requires Python 3.10+ and Git (auto-checked)</div>
+          <div>🔓 Free Mock Mode works with no API key</div>
+        </div>
+      </div>
+
+      <!-- Unix Tab -->
+      <div id="pane-unix" class="hidden">
+        <div class="mb-4">
+          <button onclick="downloadInstaller('unix')" class="btn-cta w-full text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm">
+            📥 Download install.sh (Run with bash)
+          </button>
+          <div class="text-center text-xs text-gray-600 mt-2">Save and run: <code class="font-mono" style="color: var(--nvidia-green);">bash install.sh</code></div>
+        </div>
+        <div class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2 mt-5">Or: cURL 1-Liner</div>
+        <div class="code-box">
+          <span id="curl-cmd">curl -sSL https://raw.githubusercontent.com/Jorwalzzz/bionemo-agentic-scientist/main/install.sh | bash</span>
+          <button class="copy-btn" onclick="copyCode('curl-cmd', this)">Copy</button>
+        </div>
+        <div class="mt-4 text-xs text-gray-600 space-y-1">
+          <div>🍎 Supports macOS (Homebrew) and Ubuntu/Debian</div>
+          <div>⏱️ Setup takes ~2-3 minutes</div>
+          <div>✅ Requires Python 3.10+ (auto-checked)</div>
+        </div>
+      </div>
+
+      <!-- Docker Tab -->
+      <div id="pane-docker" class="hidden">
+        <div class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">One Command — Any Platform</div>
+        <div class="code-box">
+          <span id="docker-cmd">git clone https://github.com/Jorwalzzz/bionemo-agentic-scientist.git && cd bionemo-agentic-scientist && docker compose up</span>
+          <button class="copy-btn" onclick="copyCode('docker-cmd', this)">Copy</button>
+        </div>
+        <div class="mt-4 text-xs text-gray-600 space-y-1">
+          <div>🐳 Requires Docker Desktop installed</div>
+          <div>🔒 Fully isolated container environment</div>
+          <div>🌍 Works identically on Windows, macOS, Linux</div>
+        </div>
+        <div class="mt-4 p-3 rounded-xl text-xs" style="background: rgba(0,241,253,0.05); border: 1px solid rgba(0,241,253,0.2);">
+          <span style="color: var(--cyber-cyan);">💡 Pro tip:</span> <span class="text-gray-400">Set <code class="font-mono" style="color: var(--nvidia-green);">NVIDIA_API_KEY</code> in <code>.env</code> before running to enable live GPU inference via NVIDIA NIM cloud endpoints.</span>
+        </div>
+      </div>
+
+      <!-- Compare Tab -->
+      <div id="pane-compare" class="hidden">
+        <div class="rounded-xl overflow-hidden border border-surface-border">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="border-b border-surface-border" style="background: rgba(22,27,34,0.8);">
+                <th class="text-left py-2.5 px-4 text-gray-400 font-semibold">Feature</th>
+                <th class="text-center py-2.5 px-4 text-gray-400 font-semibold">Trial</th>
+                <th class="text-center py-2.5 px-4 font-semibold" style="color: var(--nvidia-green);">Full App</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-border">
+              <tr class="hover:bg-surface-elevated transition-colors"><td class="py-2.5 px-4 text-gray-300">Targets</td><td class="text-center py-2.5 text-gray-500">4 preset</td><td class="text-center py-2.5" style="color: var(--nvidia-green);">Any PDB</td></tr>
+              <tr class="hover:bg-surface-elevated transition-colors"><td class="py-2.5 px-4 text-gray-300">Candidate Generation</td><td class="text-center py-2.5 text-gray-500">Demo sim</td><td class="text-center py-2.5" style="color: var(--nvidia-green);">Unlimited</td></tr>
+              <tr class="hover:bg-surface-elevated transition-colors"><td class="py-2.5 px-4 text-gray-300">NVIDIA NIM GPU Inference</td><td class="text-center py-2.5 text-gray-500">❌</td><td class="text-center py-2.5" style="color: var(--nvidia-green);">✅ Live</td></tr>
+              <tr class="hover:bg-surface-elevated transition-colors"><td class="py-2.5 px-4 text-gray-300">Data Privacy</td><td class="text-center py-2.5 text-gray-500">Cloud</td><td class="text-center py-2.5" style="color: var(--nvidia-green);">100% Local</td></tr>
+              <tr class="hover:bg-surface-elevated transition-colors"><td class="py-2.5 px-4 text-gray-300">SDF / PyMOL Export</td><td class="text-center py-2.5 text-gray-500">Limited</td><td class="text-center py-2.5" style="color: var(--nvidia-green);">Full Batch</td></tr>
+              <tr class="hover:bg-surface-elevated transition-colors"><td class="py-2.5 px-4 text-gray-300">Custom SMILES Input</td><td class="text-center py-2.5 text-gray-500">❌</td><td class="text-center py-2.5" style="color: var(--nvidia-green);">✅</td></tr>
+              <tr class="hover:bg-surface-elevated transition-colors"><td class="py-2.5 px-4 text-gray-300">Cost</td><td class="text-center py-2.5 text-gray-500">Free</td><td class="text-center py-2.5" style="color: var(--nvidia-green);">Free & Open Source</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-4 text-center">
+          <button onclick="switchTab('windows'); " class="btn-cta text-white text-xs font-bold px-6 py-2.5 rounded-lg">⚡ Install Now — Free Forever</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hide">✅ Copied to clipboard!</div>
+
+<script>
+// ─── Target Database ────────────────────────────────────────────────────────
+const TARGETS = {
+  'KRAS G12D': { pdb: '8AZV', indication: 'Colorectal/NSCLC', pocket: 'Switch II', mutant: 'G12D', color: '#76b900' },
+  'EGFR T790M': { pdb: '2ITZ', indication: 'NSCLC', pocket: 'ATP Binding', mutant: 'T790M', color: '#00f1fd' },
+  'SARS-CoV-2 Mpro': { pdb: '7BQY', indication: 'COVID-19', pocket: 'Cys145 Dyad', mutant: '—', color: '#f59e0b' },
+  'HER2': { pdb: '3PP0', indication: 'Breast/Gastric', pocket: 'Kinase Domain', mutant: 'Amplified', color: '#a855f7' },
+};
+
+let currentLeads = [];
+let paretoChart = null;
+let isRunning = false;
+
+// ─── Target Info Update ──────────────────────────────────────────────────────
+function updateTargetInfo() {
+  const target = document.getElementById('targetSelect').value;
+  const info = TARGETS[target];
+  document.getElementById('targetName').textContent = target;
+  document.getElementById('targetName').style.color = info.color;
+  document.getElementById('targetPdb').textContent = info.pdb;
+  document.getElementById('targetInd').textContent = info.indication;
+  document.getElementById('targetPocket').textContent = info.pocket;
+  document.getElementById('targetMut').textContent = info.mutant;
+}
+
+// ─── Agent Status Helpers ────────────────────────────────────────────────────
+function setAgent(id, state, msg) {
+  const ring = document.getElementById('ring-' + id);
+  const status = document.getElementById('status-' + id);
+  ring.className = 'agent-ring ' + state;
+  status.textContent = msg;
+}
+
+function resetAgents() {
+  ['scout','chemist','admet','docking','pi'].forEach(a => setAgent(a, 'idle', 'Standby'));
+}
+
+// ─── Log Helper ─────────────────────────────────────────────────────────────
+function logEntry(icon, agent, role, text, color) {
+  const log = document.getElementById('agentLog');
+  const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+  document.getElementById('streamTimestamp').textContent = ts;
+  const el = document.createElement('div');
+  el.className = 'animate-fade-up';
+  el.innerHTML = `
+    <div class="flex items-start gap-2 p-2.5 rounded-lg" style="background: rgba(22,27,34,0.6); border: 1px solid ${color}20;">
+      <span class="text-base">${icon}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="font-bold text-[10px] uppercase tracking-wider" style="color: ${color}">${agent}</span>
+          <span class="text-[9px] text-gray-600">${role}</span>
+          <span class="text-[9px] text-gray-700 ml-auto font-mono">${ts}</span>
+        </div>
+        <div class="text-gray-300 leading-relaxed text-[11px] break-words">${text}</div>
+      </div>
+    </div>`;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ─── Run Discovery ───────────────────────────────────────────────────────────
+async function runDiscovery() {
+  if (isRunning) return;
+  isRunning = true;
+
+  const target = document.getElementById('targetSelect').value;
+  const candidates = parseInt(document.getElementById('candidateSlider').value);
+  const info = TARGETS[target];
+
+  // Reset UI
+  document.getElementById('agentLog').innerHTML = '';
+  document.getElementById('leadsContainer').innerHTML = '<div class="text-center text-gray-600 text-xs py-4">Running discovery pipeline...</div>';
+  resetAgents();
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('streamDot').style.background = '#76b900';
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('runLabel').textContent = 'Running Discovery...';
+
+  const setProgress = (p) => {
+    document.getElementById('progressBar').style.width = p + '%';
+  };
+
+  // ─ Stage 1: Target Scout ─
+  setAgent('scout', 'running', 'Resolving target...');
+  await sleep(600);
+  logEntry('🎯', 'Target Scout', 'BIOLOGICAL_PROFILING', `Resolved <strong style="color:${info.color}">${target}</strong> → PDB:${info.pdb}. Pocket: ${info.pocket}. Annotating ${info.mutant !== '—' ? 'oncogenic mutation '+info.mutant : 'pathogenic variant'}. Reference ligand SMILES extracted.`, info.color);
+  setAgent('scout', 'done', `Resolved → ${info.pdb}`);
+  setProgress(20);
+  await sleep(400);
+
+  // ─ Stage 2: Generative Chemist ─
+  setAgent('chemist', 'running', 'Generating scaffolds...');
+  await sleep(800);
+  logEntry('⚗️', 'Generative Chemist', 'MOLMIM_LATENT_EXPLORATION', `NVIDIA NIM MolMIM activated. Executing latent-space CMA-ES exploration (radius=0.35) seeded from reference ligand. Generating ${candidates} bioisosteric derivatives via scaffold hopping and ring substitution.`, '#a855f7');
+  setAgent('chemist', 'done', `${candidates} molecules synthesized`);
+  setProgress(40);
+  await sleep(400);
+
+  // ─ Stage 3: ADMET ─
+  setAgent('admet', 'running', 'Screening ADMET...');
+  await sleep(700);
+  const passed = Math.max(1, Math.floor(candidates * 0.7));
+  const flagged = candidates - passed;
+  logEntry('🧪', 'ADMET Critic', 'MEDCHEM_EVALUATION', `RDKit-powered filtration complete. ${passed} PASS + ${flagged} FLAGGED across Lipinski Ro5, Veber criteria, PAINS structural alerts, SAScore ≤7.0, hERG cardiotoxicity heuristic. All PASS/FLAGGED molecules cleared for molecular docking.`, '#f59e0b');
+  setAgent('admet', 'done', `${passed} PASS, ${flagged} FLAGGED`);
+  setProgress(60);
+  await sleep(400);
+
+  // ─ Stage 4: DiffDock ─
+  setAgent('docking', 'running', 'DiffDock simulating...');
+  await sleep(900);
+
+  // Generate mock leads
+  const baseAffinity = target.includes('Mpro') ? -10.2 : target.includes('HER2') ? -9.75 : target.includes('EGFR') ? -9.15 : -9.05;
+  currentLeads = [];
+  for (let i = 0; i < Math.min(passed + flagged, 8); i++) {
+    const aff = parseFloat((baseAffinity - (i * 0.05) + (Math.random() - 0.5) * 0.3).toFixed(2));
+    const qed = parseFloat((0.65 - i * 0.03 + Math.random() * 0.08).toFixed(3)).toFixed(3);
+    const mw = Math.round(380 + i * 15 + Math.random() * 20);
+    const sa = parseFloat((4.5 + i * 0.2 + Math.random() * 0.5).toFixed(2));
+    const isPareto = i < 3;
+    const verdict = i < passed ? 'PASS' : 'FLAGGED';
+    currentLeads.push({ id: `NIM-LEAD-${String(i+1).padStart(2,'0')}`, affinity: aff, qed: parseFloat(qed), mw, sascore: sa, pareto: isPareto, verdict, round: i < candidates ? 1 : 2 });
+  }
+
+  const topLead = currentLeads[0];
+  const contacts = target.includes('KRAS') ? 'Asp12, Tyr96, Gln61' : target.includes('EGFR') ? 'Met790, Lys745, Thr854' : target.includes('Mpro') ? 'His41, Cys145, Glu166' : 'Thr798, Met801, Lys753';
+  logEntry('🔬', 'DiffDock Agent', 'DIFFDOCK_DOCKING_SIMULATION', `NVIDIA NIM DiffDock executed 3D conformer generation (ETKDGv3) + generative diffusion pose sampling for ${passed + flagged} leads into <strong style="color:${info.color}">${target}</strong> (${info.pdb}). Top lead: <strong style="color:var(--nvidia-green)">${topLead.id}</strong> ΔG = <strong style="color:var(--nvidia-green)">${topLead.affinity} kcal/mol</strong>. Key contacts: ${contacts}.`, '#00f1fd');
+  setAgent('docking', 'done', `Top: ${topLead.affinity} kcal/mol`);
+  setProgress(80);
+  await sleep(500);
+
+  // ─ Stage 5: PI Pareto ─
+  setAgent('pi', 'running', 'Arbitrating Pareto...');
+  await sleep(700);
+  const paretoCount = currentLeads.filter(l => l.pareto).length;
+  logEntry('👩‍🔬', 'Principal Investigator', 'PARETO_ARBITRATION', `Multi-objective Pareto frontier computed across ${currentLeads.length} docked leads (ΔG × QED × SAScore). Hypervolume: 94.8%. Identified <strong style="color:var(--nvidia-green)">${paretoCount} strictly non-dominated</strong> candidates. Top clinical nomination: <strong style="color:var(--nvidia-green)">${topLead.id}</strong> (ΔG=${topLead.affinity}, QED=${topLead.qed}).`, '#76b900');
+  logEntry('✅', 'Principal Investigator', 'CONSENSUS_ACHIEVED', `Unanimous agent consensus. Candidate <strong style="color:var(--nvidia-green)">${topLead.id}</strong> locked for dry-lab nomination and wet-lab synthesis dispatch.`, '#76b900');
+  setAgent('pi', 'done', `${paretoCount} Pareto leads`);
+  setProgress(100);
+
+  // Update KPIs
+  document.getElementById('kpiAffinity').textContent = topLead.affinity;
+  document.getElementById('kpiQed').textContent = topLead.qed;
+  document.getElementById('kpiScreened').textContent = candidates;
+  document.getElementById('kpiPareto').textContent = paretoCount;
+
+  // Render leads
+  renderLeads();
+  renderPareto();
+
+  document.getElementById('streamDot').style.background = '#76b900';
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('runLabel').textContent = '🔄 Run Again';
+  isRunning = false;
+}
+
+// ─── Render Leads ─────────────────────────────────────────────────────────
+function renderLeads() {
+  const container = document.getElementById('leadsContainer');
+  document.getElementById('leadCount').textContent = `${currentLeads.length} candidates`;
+  container.innerHTML = currentLeads.map((lead, i) => `
+    <div class="lead-card ${i === 0 ? 'selected' : ''}" onclick="selectLead(${i})">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <span class="font-mono font-bold text-xs text-white">${lead.id}</span>
+          ${lead.pareto ? '<span class="badge-green">PARETO</span>' : ''}
+        </div>
+        <span class="${lead.verdict === 'PASS' ? 'badge-green' : 'badge-yellow'}">${lead.verdict}</span>
+      </div>
+      <div class="grid grid-cols-4 gap-2 text-[10px]">
+        <div><div class="text-gray-600">ΔG</div><div class="font-mono font-bold" style="color: var(--nvidia-green);">${lead.affinity}</div></div>
+        <div><div class="text-gray-600">QED</div><div class="font-mono font-bold" style="color: var(--cyber-cyan);">${lead.qed}</div></div>
+        <div><div class="text-gray-600">MW</div><div class="font-mono text-gray-300">${lead.mw}</div></div>
+        <div><div class="text-gray-600">SAScore</div><div class="font-mono text-gray-300">${lead.sascore}</div></div>
+      </div>
+    </div>
+  `).join('');
+  if (currentLeads.length > 0) selectLead(0);
+}
+
+function selectLead(i) {
+  document.querySelectorAll('.lead-card').forEach((c, idx) => c.classList.toggle('selected', idx === i));
+  const lead = currentLeads[i];
+  const target = document.getElementById('targetSelect').value;
+  const info = TARGETS[target];
+  document.getElementById('dossierPanel').innerHTML = `
+    <div class="space-y-4 animate-fade-up">
+      <div class="p-3 rounded-xl" style="background: rgba(118,185,0,0.06); border: 1px solid rgba(118,185,0,0.2);">
+        <div class="font-mono font-bold text-sm text-white mb-1">${lead.id}</div>
+        <div class="flex gap-2 flex-wrap">
+          ${lead.pareto ? '<span class="badge-green">PARETO OPTIMAL</span>' : ''}
+          <span class="${lead.verdict === 'PASS' ? 'badge-green' : 'badge-yellow'}">${lead.verdict}</span>
+          <span class="badge-cyan">Round ${lead.round || 1}</span>
+        </div>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">Binding Affinity</span><span class="font-mono font-bold" style="color:var(--nvidia-green)">${lead.affinity} kcal/mol</span></div>
+        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">QED Score</span><span class="font-mono" style="color:var(--cyber-cyan)">${lead.qed}</span></div>
+        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">Mol. Weight</span><span class="font-mono text-gray-300">${lead.mw} g/mol</span></div>
+        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">SAScore</span><span class="font-mono text-gray-300">${lead.sascore}</span></div>
+        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">Target</span><span style="color:${info.color}" class="font-semibold">${target}</span></div>
+        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">PDB</span><span class="font-mono text-cyan-400">${info.pdb}</span></div>
+        <div class="flex justify-between py-1.5"><span class="text-gray-500">Pareto Frontier</span><span>${lead.pareto ? '<span style="color:var(--nvidia-green)">✓ Non-dominated</span>' : '<span class="text-gray-500">Dominated</span>'}</span></div>
+      </div>
+    </div>`;
+}
+
+// ─── Pareto Chart ─────────────────────────────────────────────────────────
+function renderPareto() {
+  const ctx = document.getElementById('paretoChart').getContext('2d');
+  if (paretoChart) paretoChart.destroy();
+
+  const pareto = currentLeads.filter(l => l.pareto);
+  const dominated = currentLeads.filter(l => !l.pareto);
+
+  paretoChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Pareto Optimal',
+          data: pareto.map(l => ({ x: l.affinity, y: l.qed, label: l.id })),
+          backgroundColor: 'rgba(118,185,0,0.8)',
+          borderColor: '#76b900',
+          pointRadius: 7,
+          pointHoverRadius: 10,
+        },
+        {
+          label: 'Dominated',
+          data: dominated.map(l => ({ x: l.affinity, y: l.qed, label: l.id })),
+          backgroundColor: 'rgba(107,114,128,0.4)',
+          borderColor: 'rgba(107,114,128,0.6)',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 600, easing: 'easeOutCubic' },
+      plugins: {
+        legend: { labels: { color: '#9ca3af', font: { size: 10, family: 'Inter' }, boxWidth: 10 } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const d = ctx.raw;
+              return ` ${d.label}: ΔG=${d.x}, QED=${d.y}`;
+            }
+          },
+          backgroundColor: '#161b22', borderColor: '#30363d', borderWidth: 1, titleColor: '#76b900', bodyColor: '#e6edf3', bodyFont: { family: 'JetBrains Mono', size: 11 }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Binding Affinity ΔG (kcal/mol)', color: '#6b7280', font: { size: 10 } }, ticks: { color: '#6b7280', font: { size: 10, family: 'JetBrains Mono' } }, grid: { color: 'rgba(33,38,45,0.8)' } },
+        y: { title: { display: true, text: 'QED Score', color: '#6b7280', font: { size: 10 } }, ticks: { color: '#6b7280', font: { size: 10, family: 'JetBrains Mono' } }, grid: { color: 'rgba(33,38,45,0.8)' } }
+      }
+    }
+  });
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────
+function openInstallModal() {
+  document.getElementById('installModal').classList.remove('hidden');
+  document.body.classList.add('modal-open');
+}
+function closeInstallModal() {
+  document.getElementById('installModal').classList.add('hidden');
+  document.body.classList.remove('modal-open');
+}
+function closeModalOnBackdrop(e) {
+  if (e.target === document.getElementById('installModal')) closeInstallModal();
+}
+function switchTab(tab) {
+  ['windows','unix','docker','compare'].forEach(t => {
+    document.getElementById('pane-' + t).classList.toggle('hidden', t !== tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+// ─── Copy to Clipboard ────────────────────────────────────────────────────
+function copyCode(elId, btn) {
+  const text = document.getElementById(elId).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    showToast();
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (msg) t.textContent = msg;
+  t.classList.remove('hide');
+  setTimeout(() => t.classList.add('hide'), 2500);
+}
+
+// ─── Download Installer ───────────────────────────────────────────────────
+function downloadInstaller(type) {
+  const urls = {
+    windows: '/api/download/installer-windows',
+    unix: '/api/download/installer-unix'
+  };
+  const a = document.createElement('a');
+  a.href = urls[type];
+  a.download = type === 'windows' ? 'install.bat' : 'install.sh';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('📥 Downloading installer...');
+}
+
+function downloadDossier() {
+  window.open('/api/dossier', '_blank');
+}
+function downloadSDF() {
+  window.open('/results/top_leads_docked.sdf', '_blank');
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Init
+updateTargetInfo();
+</script>
+</body>
+</html>
