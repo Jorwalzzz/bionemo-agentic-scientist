@@ -13,6 +13,41 @@ An autonomous artificial intelligence discovery system orchestrating specialized
 
 ---
 
+## 🚀 Choose How to Experience Agentic BioNeMo
+
+| Option | What You Get | Setup Time | How to Access |
+| :--- | :--- | :--- | :--- |
+| **🌐 Option A: Instant Web Trial** | **1 Free Autonomous Discovery Run** directly in browser. Interactive 3D molecular viewer (`3Dmol.js`), real-time agent audit telemetry, ADMET radar, and Pareto frontier. Zero install required. | **0 seconds** | Visit hosted demo: [http://localhost:8000](http://localhost:8000) *(or your deployed URL)* |
+| **💻 Option B: Direct Free Local Install** *(Recommended)* | **100% UNLIMITED Discovery Campaigns**. Screen 10,000+ candidates, upload custom PDB targets, export 3D SDF conformers, and unlock NVIDIA GPU acceleration with zero rate limits on your own PC. | **< 2 minutes** *(Automated)* | Run 1-Click Installer below 👇 |
+
+---
+
+### ⚡ 1-Click Automated Installation (100% Free & Open-Source)
+
+No manual environment setup, no dependency headache. Choose your platform:
+
+#### 🪟 Windows (1-Click Desktop Setup)
+Download and double-click [`install.bat`](https://raw.githubusercontent.com/Jorwalzzz/bionemo-agentic-scientist/main/install.bat) or run in PowerShell:
+```powershell
+irm https://raw.githubusercontent.com/Jorwalzzz/bionemo-agentic-scientist/main/install.ps1 | iex
+```
+
+#### 🐧 Linux & 🍎 macOS (1-Liner Terminal Setup)
+Run in your terminal:
+```bash
+curl -sSL https://raw.githubusercontent.com/Jorwalzzz/bionemo-agentic-scientist/main/install.sh | bash
+```
+
+#### 🐳 Docker (Instant Isolated Container)
+```bash
+git clone https://github.com/Jorwalzzz/bionemo-agentic-scientist.git
+cd bionemo-agentic-scientist
+docker compose up -d
+```
+Then open [http://localhost:8000](http://localhost:8000).
+
+---
+
 ## Highlights
 
 - **Autonomous Closed-Loop Lead Optimization**: From raw biological target query (`"KRAS G12D"`) to structural pocket resolution, de novo latent generation, ADMET filtering, and 3D molecular docking.
