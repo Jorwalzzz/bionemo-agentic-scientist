@@ -1,6 +1,6 @@
 # Drug Candidate Selection Dossier: EGFR T790M
 **Target:** EGFR T790M (EGFR) | **UniProt:** P00533 | **PDB:** 2ITZ  
-**Date of Selection:** 2026-09-28 07:28:25 UTC  
+**Date of Selection:** 2026-09-28 07:45:30 UTC  
 **Principal Investigator:** Agentic BioNeMo Autonomous Discovery System  
 
 ---
