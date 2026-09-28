@@ -52,7 +52,7 @@ def display_agent_message(msg: AgentMessage):
 
 def main():
     parser = argparse.ArgumentParser(description="Agentic BioNeMo: Autonomous Multi-Agent AI Drug Discovery Scientist")
-    parser.add_argument("--target", type=str, default="KRAS G12D", choices=["KRAS G12D", "EGFR T790M", "BRAF V600E"], help="Clinical target query")
+    parser.add_argument("--target", type=str, default="KRAS G12D", choices=["KRAS G12D", "EGFR T790M", "BRAF V600E", "SARS-CoV-2 Mpro", "HER2"], help="Clinical target query")
     parser.add_argument("--candidates", type=int, default=12, help="Number of chemical candidates to generate per round")
     parser.add_argument("--mock", action="store_true", default=True, help="Run in zero-credit simulation mock mode")
     parser.add_argument("--no-feedback", action="store_true", help="Disable PI autonomous feedback loop")

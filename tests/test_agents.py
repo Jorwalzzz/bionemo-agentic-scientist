@@ -90,3 +90,28 @@ def test_docking_and_pi_pareto():
     assert any(c.is_pareto_optimal for c in top_leads)
     assert hasattr(top_leads[0], "composite_rank_score")
     assert top_leads[0].composite_rank_score > 0
+
+def test_target_scout_mpro_and_her2():
+    scout = TargetScoutAgent()
+    chemist = GenerativeChemistAgent(mock=True)
+    critic = ADMETCriticAgent()
+
+    # Test Mpro
+    mpro_profile, mpro_msg = scout.scout_target("SARS-CoV-2 Mpro")
+    assert mpro_profile.gene == "ORF1ab"
+    assert mpro_profile.pdb_id == "7BQY"
+    assert "Cys145" in mpro_profile.pocket_residues
+    mpro_cands, _ = chemist.generate_derivatives(mpro_profile.reference_ligand_smiles, mpro_profile.name, num_molecules=6)
+    assert len(mpro_cands) >= 6
+    eval_mpro, _ = critic.evaluate_candidates(mpro_cands)
+    assert all(c.qed > 0 for c in eval_mpro)
+
+    # Test HER2
+    her2_profile, her2_msg = scout.scout_target("HER2")
+    assert her2_profile.gene == "ERBB2"
+    assert her2_profile.pdb_id == "3PP0"
+    assert "Thr798" in her2_profile.pocket_residues
+    her2_cands, _ = chemist.generate_derivatives(her2_profile.reference_ligand_smiles, her2_profile.name, num_molecules=6)
+    assert len(her2_cands) >= 6
+    eval_her2, _ = critic.evaluate_candidates(her2_cands)
+    assert all(c.admet_verdict in ("PASS", "FLAGGED") for c in eval_her2)

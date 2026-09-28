@@ -125,6 +125,32 @@ class GenerativeChemistAgent:
                 "C1CC1S(=O)(=O)NC2=C(F)C(=C(C=C2)C(=O)C3=CNC4=C3C=C(C=N4)C5=CC=C(Cl)C=C5)F", # Cyclopropyl sulfonamide
                 "CCCS(=O)(=O)NC1=C(F)C(=C(C=C1)C(=O)C2=CNC3=C2C=C(C=N3)C4=CC=C(C(F)(F)F)C=C4)F"  # Trifluoromethyl
             ]
+        elif "MPRO" in target_name.upper() or "SARS" in target_name.upper():
+            # Nirmatrelvir / Mpro bioisosteric derivatives
+            smiles_bank = [
+                "CC1(C2C1C(N(C2)C(=O)C(C(C)(C)C)NC(=O)C(F)(F)F)C(=O)NC(CC3CCNC3=O)C#N)C", # Nirmatrelvir parent
+                "CC1(C2C1C(N(C2)C(=O)C(C(C)(C)C)NC(=O)C(F)F)C(=O)NC(CC3CCNC3=O)C#N)C",   # Difluoroacetyl
+                "CC1(C2C1C(N(C2)C(=O)C(C(C)(C)C)NC(=O)CC(F)(F)F)C(=O)NC(CC3CCNC3=O)C#N)C", # Trifluoropropanoyl
+                "CC1(C2C1C(N(C2)C(=O)C(C(C)(C)C)NC(=O)C3CC3)C(=O)NC(CC3CCNC3=O)C#N)C",   # Cyclopropyl carboxamide
+                "CC1(C2C1C(N(C2)C(=O)C(C(C)(C)C)NC(=O)C(F)(F)F)C(=O)NC(CC3CCCNC3=O)C#N)C", # Piperidinone warhead analog
+                "CC1(C2C1C(N(C2)C(=O)C(C(C)(C)C)NC(=O)C(Cl)(F)F)C(=O)NC(CC3CCNC3=O)C#N)C", # Chlorodifluoroacetyl
+                "CC1(C2C1C(N(C2)C(=O)C(C3CC3)NC(=O)C(F)(F)F)C(=O)NC(CC4CCNC4=O)C#N)C",   # Cyclopropyl core modification
+                "CC1(C2C1C(N(C2)C(=O)C(C(C)(C)C)NC(=O)C(F)(F)F)C(=O)NC(CC3CCOC3=O)C#N)C",   # Lactone warhead
+                "CC1(C2C1C(N(C2)C(=O)C(C3CCOCC3)NC(=O)C(F)(F)F)C(=O)NC(CC4CCNC4=O)C#N)C"  # Tetrahydropyran core
+            ]
+        elif "HER2" in target_name.upper() or "ERBB2" in target_name.upper():
+            # Lapatinib / HER2 kinase inhibitor bioisosteric derivatives
+            smiles_bank = [
+                "CS(=O)(=O)CCNCC1=CC=C(O1)C2=CC3=C(C=C2)N=CN=C3NC4=CC(=C(C=C4)OCC5=CC(=CC=C5)F)Cl", # Lapatinib parent
+                "CS(=O)(=O)CCCNCC1=CC=C(O1)C2=CC3=C(C=C2)N=CN=C3NC4=CC(=C(C=C4)OCC5=CC(=CC=C5)F)Cl", # Propyl spacer
+                "CCS(=O)(=O)CCNCC1=CC=C(O1)C2=CC3=C(C=C2)N=CN=C3NC4=CC(=C(C=C4)OCC5=CC(=CC=C5)F)Cl", # Ethylsulfonyl
+                "CS(=O)(=O)CCNCC1=CC=C(O1)C2=CC3=C(C=C2)N=CN=C3NC4=CC(=C(C=C4)OCC5=C(F)C=CC(=C5)F)Cl", # Difluorobenzyloxy
+                "CS(=O)(=O)CCNCC1=CC=C(S1)C2=CC3=C(C=C2)N=CN=C3NC4=CC(=C(C=C4)OCC5=CC(=CC=C5)F)Cl", # Thiophene bioisostere
+                "CS(=O)(=O)CCNCC1=CC=C(O1)C2=CC3=C(C=C2)N=CN=C3NC4=CC=C(OCC5=CC(=CC=C5)F)C=C4",     # Des-chloro
+                "CS(=O)(=O)CCNCC1=CC=C(O1)C2=CC3=C(C(F)=C2)N=CN=C3NC4=CC(=C(C=C4)OCC5=CC(=CC=C5)F)Cl", # 6-fluoroquinazoline
+                "CS(=O)(=O)CCN1CCC(CC1)C2=CC=C(O2)C3=CC4=C(C=C3)N=CN=C4NC5=CC(=C(C=C5)OCC6=CC(=CC=C6)F)Cl", # Piperidine
+                "CS(=O)(=O)CCNCC1=CC=C(O1)C2=CC3=C(C=C2)N=CN=C3NC4=CC(=C(C=C4)OCCN5CCOCC5)Cl"        # Morpholine ether
+            ]
         else:
             # EGFR T790M / Gefitinib derivatives
             smiles_bank = [

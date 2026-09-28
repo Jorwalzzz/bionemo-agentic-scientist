@@ -54,7 +54,7 @@ def test_cycle_3_target_scout_fuzzing():
     for t in fuzz_targets:
         prof, msg = orch.target_scout.scout_target(t)
         assert prof is not None, f"Profile was None for {t}"
-        assert prof.name in ["KRAS G12D", "EGFR T790M", "BRAF V600E"], f"Unexpected profile {prof.name} for {t}"
+        assert prof.name in ["KRAS G12D", "EGFR T790M", "BRAF V600E", "SARS-CoV-2 Mpro", "HER2"], f"Unexpected profile {prof.name} for {t}"
         assert len(prof.canonical_sequence) > 0
     print("    ✔ All corrupted targets gracefully resolved to default/fallback profiles.")
 

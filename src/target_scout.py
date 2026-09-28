@@ -11,6 +11,28 @@ from src.pdb_utils import fetch_pdb_online_or_mock, clean_pdb_structure, extract
 logger = logging.getLogger("TargetScout")
 
 TARGET_REGISTRY: Dict[str, Dict] = {
+    "SARS-CoV-2 Mpro": {
+        "gene": "ORF1ab",
+        "uniprot_id": "P0DTD1",
+        "pdb_id": "7BQY",
+        "description": "Viral main protease homodimer essential for processing viral polyproteins.",
+        "canonical_sequence": "SGFRKMAFPSGKVEGCMVQVTCGTTTLNGLWLDDVVYCPRHVICTSEDMLNPNYEDLLIRKSNHNFLVQAGNVQLRVIGHSMQNCVLKLKVDTANPKTPKYKFVRIQPGQTFSVLACYNGSPSGVYQCAMRPNFTIKGSFLNGSCGSVGFNIDYDCVSFCYMHHMELPTGVHAGTDLEGNFYGPFVDRQTAQAAGTDTTITVNVLAWLYAAVINGDRWFLNRFTTTLNDFNLVAMKYNYEPLTQDHVDILGPLSAQTGIAVLDMCASLKELLQNGMNGRTILGSALLEDEFTPFDVVRQCSGVTFQ",
+        "pocket_residues": ["His41", "Cys145", "Met49", "Met165", "Glu166", "Gln189"],
+        "reference_ligand_name": "Nirmatrelvir",
+        "reference_ligand_smiles": "CC1(C2C1C(N(C2)C(=O)C(C(C)(C)C)NC(=O)C(F)(F)F)C(=O)NC(CC3CCNC3=O)C#N)C",
+        "pocket_coords": {"x": 9.2, "y": -4.5, "z": 21.3}
+    },
+    "HER2": {
+        "gene": "ERBB2",
+        "uniprot_id": "P04626",
+        "pdb_id": "3PP0",
+        "description": "Receptor tyrosine-protein kinase erbB-2 catalytic domain amplified in breast and gastric carcinomas.",
+        "canonical_sequence": "KVLGSGAFGTVYKGIWIPDGENVKIPVAIKVLRENTSPKANKEILDEAYVMAGVGSPYVSRLLGICLTSTVQLVTQLMPYGCLLDHVRENRGRLGSQDLLNWCMQIAKGMSYLEDVRLVHRDLAARNVLVKSPNHVKITDFGLARLLDIDETEYHADGGKVPIKWMALESILRRRFTHQSDVWSYGVTVWELMTFGAKPYDGIPAREIPDLLEKGERLPQPPICTIDVYMIMVKCWMIDSECRPRFRELVSEFSRMARDPQRFVVIQNEDLGPASPLDSTFYRSLLEDDDMGDLVDAEEYLVPQQGFFCPDPAPGAGGMVHHRHRSSSTRSGGGDLTLGLEPSEEEAPRSPLAPSEGAGSDVFDGDLGMGAAKGLQSLPTHDPSPLQRYSEDPTVPLPSETDGYVAPLTCSPQPEYVNQPDVRPQPPSPREGPLPAARPAGATLERPKTLSPGKNGVVKDVFAFGGAVENPEYLTPQGGAAPQPHPPPAFSPAFDNLYYWDQDPPERGAPPSTFKGTPTAENPEYLGLDVPV",
+        "pocket_residues": ["Thr798", "Met801", "Lys753", "Leu726", "Cys805", "Asp863"],
+        "reference_ligand_name": "Lapatinib",
+        "reference_ligand_smiles": "CS(=O)(=O)CCNCC1=CC=C(O1)C2=CC3=C(C=C2)N=CN=C3NC4=CC(=C(C=C4)OCC5=CC(=CC=C5)F)Cl",
+        "pocket_coords": {"x": 18.5, "y": 14.2, "z": 32.8}
+    },
     "KRAS G12D": {
         "gene": "KRAS",
         "uniprot_id": "P01116",
@@ -55,7 +77,7 @@ class TargetScoutAgent:
         normalized_query = query.upper().strip()
         matched_key = None
         for key in TARGET_REGISTRY:
-            if key in normalized_query or any(token in normalized_query for token in key.split()):
+            if key.upper() in normalized_query or any(token in normalized_query for token in key.upper().split()):
                 matched_key = key
                 break
                 

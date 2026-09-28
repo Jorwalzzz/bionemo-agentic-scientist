@@ -1,4 +1,4 @@
-name: Agentic BioNeMo CI
+name: BioNeMo Agentic Scientist CI
 
 on:
   push:
@@ -8,24 +8,43 @@ on:
 
 jobs:
   test:
+    name: Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install rdkit biopython matplotlib seaborn requests pytest rich streamlit py3Dmol
+          pip install -r requirements.txt
+          pip install fastapi uvicorn
 
-      - name: Run Test Suite
+      - name: Run Pytest Test Suite
         run: |
           pytest tests/ -v
 
-      - name: Verify CLI Execution
+      - name: Run Comprehensive Fuzz & Stress Validation
         run: |
-          python run_agentic_scientist.py --target "KRAS G12D" --candidates 6
+          python tests/comprehensive_fuzz_loop.py
+
+      - name: Verify CLI Campaign on KRAS G12D
+        run: |
+          python run_agentic_scientist.py --target "KRAS G12D" --candidates 4
+
+      - name: Verify CLI Campaign on SARS-CoV-2 Mpro
+        run: |
+          python run_agentic_scientist.py --target "SARS-CoV-2 Mpro" --candidates 4
+
+      - name: Verify CLI Campaign on HER2
+        run: |
+          python run_agentic_scientist.py --target "HER2" --candidates 4
