@@ -87,7 +87,16 @@ class BiophysicsDockingAgent:
     def _compute_diffdock_pose(self, cand: MoleculeCandidate, target: TargetProfile) -> Tuple[float, float, List[str]]:
         """Computes docking pose binding free energy and interaction residues."""
         # Baseline seed affinities
-        base_affinity = -7.50 if "KRAS" in target.name else (-6.80 if "EGFR" in target.name else -8.10)
+        if "KRAS" in target.name:
+            base_affinity = -7.50
+        elif "EGFR" in target.name:
+            base_affinity = -6.80
+        elif "SARS" in target.name.upper() or "MPRO" in target.name.upper():
+            base_affinity = -8.50
+        elif "HER2" in target.name.upper() or "ERBB2" in target.name.upper():
+            base_affinity = -7.80
+        else:
+            base_affinity = -8.10
         
         # Target specific affinity adjustments
         mol = Chem.MolFromSmiles(cand.smiles)
@@ -117,11 +126,29 @@ class BiophysicsDockingAgent:
             if cand.hba >= 5:
                 contacts.append("Thr854")
                 delta_g -= 0.50
-        else: # BRAF
+        elif "BRAF" in target.name:
             contacts = ["Glu600", "Lys483"]
             if cand.hbd >= 1:
                 contacts.append("Phe595")
                 delta_g -= 0.40
+        elif "MPRO" in target.name.upper() or "SARS" in target.name.upper():
+            contacts = ["His41", "Cys145"]
+            if cand.hba >= 5:
+                contacts.append("Glu166")
+                delta_g -= 0.55
+            if cand.hbd >= 2:
+                contacts.append("Met49")
+                delta_g -= 0.40
+        elif "HER2" in target.name.upper() or "ERBB2" in target.name.upper():
+            contacts = ["Thr798", "Met801"]
+            if cand.hba >= 5:
+                contacts.append("Lys753")
+                delta_g -= 0.45
+            if cand.tpsa > 90.0:
+                contacts.append("Cys805")
+                delta_g -= 0.30
+        else:
+            contacts = ["Glu600", "Lys483"]
                 
         confidence = round(min(0.98, max(0.65, 0.70 + (abs(delta_g) / 25.0))), 3)
         return round(delta_g, 2), confidence, contacts

@@ -116,7 +116,7 @@ class ADMETCriticAgent:
             role="ADMET Critic",
             action="ADMET_MEDCHEM_EVALUATION",
             thought=thought_text,
-            output_summary=f"{passed_count} viable leads cleared for molecular docking simulation.",
+            output_summary=f"{passed_count} PASS + {flagged_count} FLAGGED leads cleared for molecular docking simulation.",
             status="SUCCESS"
         )
         return candidates, message
