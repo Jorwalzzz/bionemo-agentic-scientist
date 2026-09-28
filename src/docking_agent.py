@@ -40,15 +40,21 @@ class BiophysicsDockingAgent:
         for cand in eligible:
             # 1. 3D Conformer generation via RDKit ETKDGv3
             mol = Chem.MolFromSmiles(cand.smiles)
-            if mol:
-                mol = Chem.AddHs(mol)
-                params = AllChem.ETKDGv3()
-                params.randomSeed = 42
-                embed_status = AllChem.EmbedMolecule(mol, params)
-                if embed_status == 0:
-                    AllChem.MMFFOptimizeMolecule(mol, maxIters=200)
-                    mol = Chem.RemoveHs(mol)
-                    cand.pose_sdf = Chem.MolToMolBlock(mol)
+            if mol and mol.GetNumAtoms() > 0:
+                try:
+                    mol = Chem.AddHs(mol)
+                    params = AllChem.ETKDGv3()
+                    params.randomSeed = 42
+                    embed_status = AllChem.EmbedMolecule(mol, params)
+                    if embed_status == 0:
+                        try:
+                            AllChem.MMFFOptimizeMolecule(mol, maxIters=200)
+                        except Exception:
+                            pass
+                        mol = Chem.RemoveHs(mol)
+                        cand.pose_sdf = Chem.MolToMolBlock(mol)
+                except Exception as e:
+                    logger.warning(f"3D conformer generation skipped for {cand.id}: {e}")
                     
             # 2. Binding affinity & DiffDock confidence
             affinity, confidence, contacts = self._compute_diffdock_pose(cand, target)
