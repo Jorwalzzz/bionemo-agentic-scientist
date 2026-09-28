@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Secrets & Local Configs
+.env
+*.pem
+*.key
+conversation_history/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
