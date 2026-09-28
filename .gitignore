@@ -29,3 +29,7 @@ Thumbs.db
 data/.trial_secret
 data/trial_ledger.json
 
+
+cloudflared.exe
+tunnel.log
+

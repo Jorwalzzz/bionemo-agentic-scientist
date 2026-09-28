@@ -28,8 +28,8 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 LEDGER_PATH = os.environ.get("TRIAL_LEDGER_PATH", os.path.join(DATA_DIR, "trial_ledger.json"))
 SECRET_KEY_PATH = os.path.join(DATA_DIR, ".trial_secret")
-MAX_TRIAL_RUNS = int(os.environ.get("MAX_TRIAL_RUNS", "1"))
-MAX_SUBNET_RUNS = int(os.environ.get("MAX_SUBNET_RUNS", "2"))
+MAX_TRIAL_RUNS = int(os.environ.get("MAX_TRIAL_RUNS", "2"))
+MAX_SUBNET_RUNS = int(os.environ.get("MAX_SUBNET_RUNS", "4"))
 MAX_GLOBAL_DAILY_RUNS = int(os.environ.get("MAX_GLOBAL_DAILY_RUNS", "25"))
 
 # Disallowed automated bot scrapers attempting to call /api/run
@@ -377,13 +377,15 @@ class TrialLimiter:
             # Save state to disk immediately
             self._save_ledger()
 
+            runs_rem = max(0, self.max_runs - new_run_count)
+            is_locked = (runs_rem == 0)
             return True, {
                 "allowed": True,
                 "runs_used": new_run_count,
-                "runs_remaining": 0,
+                "runs_remaining": runs_rem,
                 "max_runs": self.max_runs,
-                "is_locked": True,
-                "message": "Demo trial run completed. 0 free trial runs remaining."
+                "is_locked": is_locked,
+                "message": f"Demo trial run {new_run_count} of {self.max_runs} completed. {runs_rem} free trial run(s) remaining."
             }
 
     def reset_for_tests(self) -> None:

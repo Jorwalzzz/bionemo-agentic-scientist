@@ -1,11 +1,13 @@
 """
-Unit & Security Tests for Anti-Bypass Trial Rate Limiter (Strict 1-Run Limit).
+Unit & Security Tests for Anti-Bypass Trial Rate Limiter (2-Run Model).
 Verifies that:
-- Free trials are strictly capped at max 1 single run (protecting API credits & GPU resources).
+- Free trials allow exactly 2 runs (Target A vs Target B comparison), then strictly lock.
 - Cryptographic HMAC session tokens detect tampering.
-- Cookie clearing / Incognito window cannot bypass the 1-run limit (fingerprint & IP link).
-- Fingerprint spoofing / curl cannot bypass the 1-run limit.
+- Cookie clearing / Incognito window cannot bypass the 2-run limit (fingerprint & IP link).
+- Fingerprint spoofing / curl cannot bypass the 2-run limit.
 - State persists across server restarts.
+- Anti-bot shield rejects curl/scrapers.
+- Global daily circuit breaker halts execution when daily cap is reached.
 """
 
 import os
@@ -17,8 +19,8 @@ from src.trial_limiter import TrialLimiter
 @pytest.fixture
 def limiter():
     temp_dir = tempfile.mkdtemp()
-    ledger_file = os.path.join(temp_dir, "test_trial_ledger.json")
-    t = TrialLimiter(ledger_path=ledger_file, max_runs=1, max_subnet_runs=2)
+    ledger_file = os.path.join(temp_dir, "test_trial_ledger_2runs.json")
+    t = TrialLimiter(ledger_path=ledger_file, max_runs=2, max_subnet_runs=4, max_global_daily_runs=25)
     yield t
     if os.path.exists(ledger_file):
         try:
@@ -42,38 +44,52 @@ def test_hmac_session_token_integrity(limiter):
     assert limiter.verify_and_extract_session("") is None
 
 
-def test_strict_one_run_limit(limiter):
+def test_strict_two_runs_limit(limiter):
     session = "sess_user1"
     fp = "fp_hardware_hash_abc"
     ip = "198.51.100.25"
 
-    # Initial check: 1 run remaining
+    # Initial check: 2 runs remaining
     status0 = limiter.check_usage(session, fp, ip)
     assert status0["allowed"] is True
     assert status0["runs_used"] == 0
-    assert status0["runs_remaining"] == 1
+    assert status0["runs_remaining"] == 2
     assert status0["is_locked"] is False
 
     # Run 1: Should succeed
     ok1, res1 = limiter.consume_trial_run(session, fp, ip, target_name="KRAS G12D")
     assert ok1 is True
     assert res1["runs_used"] == 1
-    assert res1["runs_remaining"] == 0
-    assert res1["is_locked"] is True
+    assert res1["runs_remaining"] == 1
+    assert res1["is_locked"] is False
 
-    # Check status: locked
+    # Check status: 1 run remaining
     status1 = limiter.check_usage(session, fp, ip)
-    assert status1["allowed"] is False
+    assert status1["allowed"] is True
     assert status1["runs_used"] == 1
-    assert status1["runs_remaining"] == 0
-    assert status1["is_locked"] is True
+    assert status1["runs_remaining"] == 1
+    assert status1["is_locked"] is False
 
-    # Run 2: MUST BE STRICTLY BLOCKED!
-    ok2, res2 = limiter.consume_trial_run(session, fp, ip, target_name="EGFR T790M")
-    assert ok2 is False
-    assert res2["error"] == "TRIAL_LIMIT_EXCEEDED"
+    # Run 2: Should succeed
+    ok2, res2 = limiter.consume_trial_run(session, fp, ip, target_name="SARS-CoV-2 Mpro")
+    assert ok2 is True
+    assert res2["runs_used"] == 2
     assert res2["runs_remaining"] == 0
     assert res2["is_locked"] is True
+
+    # Check status: locked
+    status2 = limiter.check_usage(session, fp, ip)
+    assert status2["allowed"] is False
+    assert status2["runs_used"] == 2
+    assert status2["runs_remaining"] == 0
+    assert status2["is_locked"] is True
+
+    # Run 3: MUST BE STRICTLY BLOCKED!
+    ok3, res3 = limiter.consume_trial_run(session, fp, ip, target_name="EGFR T790M")
+    assert ok3 is False
+    assert res3["error"] == "TRIAL_LIMIT_EXCEEDED"
+    assert res3["runs_remaining"] == 0
+    assert res3["is_locked"] is True
 
 
 def test_exploit_attempt_clearing_cookies(limiter):
@@ -81,14 +97,15 @@ def test_exploit_attempt_clearing_cookies(limiter):
     fp = "fp_canvas_webgl_device_1"
     ip = "203.0.113.50"
 
-    # User performs their 1 allowed run with Session A
+    # User performs 2 allowed runs with Session A
     limiter.consume_trial_run("sess_A", fp, ip, "KRAS")
+    limiter.consume_trial_run("sess_A", fp, ip, "Mpro")
 
     # Attacker clears cookies -> browser generates new session_B
     # But same device fingerprint & IP
     status = limiter.check_usage("sess_B", fp, ip)
     assert status["allowed"] is False
-    assert status["runs_used"] == 1
+    assert status["runs_used"] == 2
     assert status["is_locked"] is True
 
     ok, res = limiter.consume_trial_run("sess_B", fp, ip, "EGFR")
@@ -101,14 +118,15 @@ def test_exploit_attempt_incognito_different_browser(limiter):
     ip = "203.0.113.88"
 
     limiter.consume_trial_run("chrome_sess", "chrome_fp", ip, "KRAS")
+    limiter.consume_trial_run("chrome_sess", "chrome_fp", ip, "Mpro")
 
     # Opens Firefox Incognito on same network/device -> blocked by IP & subnet
     status = limiter.check_usage("firefox_incognito_sess", "firefox_fp", ip)
     assert status["allowed"] is False
-    assert status["runs_used"] == 1
+    assert status["runs_used"] == 2
     assert status["is_locked"] is True
 
-    ok, res = limiter.consume_trial_run("firefox_incognito_sess", "firefox_fp", ip, "Mpro")
+    ok, res = limiter.consume_trial_run("firefox_incognito_sess", "firefox_fp", ip, "HER2")
     assert ok is False
     assert res["error"] == "TRIAL_LIMIT_EXCEEDED"
 
@@ -120,18 +138,19 @@ def test_persistence_across_server_restarts(limiter):
     ip = "192.0.2.42"
 
     limiter.consume_trial_run(session, fp, ip, "KRAS")
+    limiter.consume_trial_run(session, fp, ip, "Mpro")
 
     # Simulate server reboot by creating a fresh limiter pointing to the same file
-    new_server_limiter = TrialLimiter(ledger_path=limiter.ledger_path, max_runs=1)
+    new_server_limiter = TrialLimiter(ledger_path=limiter.ledger_path, max_runs=2)
     status = new_server_limiter.check_usage(session, fp, ip)
-    assert status["runs_used"] == 1
+    assert status["runs_used"] == 2
     assert status["runs_remaining"] == 0
     assert status["is_locked"] is True
 
-    # 2nd run blocked on rebooted server
-    ok2, res2 = new_server_limiter.consume_trial_run(session, fp, ip, "HER2")
-    assert ok2 is False
-    assert res2["error"] == "TRIAL_LIMIT_EXCEEDED"
+    # 3rd run blocked on rebooted server
+    ok3, res3 = new_server_limiter.consume_trial_run(session, fp, ip, "HER2")
+    assert ok3 is False
+    assert res3["error"] == "TRIAL_LIMIT_EXCEEDED"
 
 
 def test_bot_user_agent_shield(limiter):
