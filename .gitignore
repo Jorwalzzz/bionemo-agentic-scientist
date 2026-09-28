@@ -24,3 +24,8 @@ conversation_history/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Trial limiter secrets & ledger
+data/.trial_secret
+data/trial_ledger.json
+

@@ -139,9 +139,9 @@ tailwind.config = {
     </div>
 
     <!-- Center: Trial Banner -->
-    <div class="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full text-xs" style="background: rgba(118,185,0,0.06); border: 1px solid rgba(118,185,0,0.2);">
-      <span class="w-1.5 h-1.5 rounded-full bg-nvidia-green animate-pulse"></span>
-      <span class="text-gray-400">Free Trial: 4 Targets • </span>
+    <div id="trialBadge" class="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full text-xs transition-all" style="background: rgba(118,185,0,0.06); border: 1px solid rgba(118,185,0,0.2);">
+      <span id="trialDot" class="w-1.5 h-1.5 rounded-full bg-nvidia-green animate-pulse"></span>
+      <span id="trialText" class="text-gray-300 font-medium">Free Trial: Checking quota...</span>
       <span class="text-nvidia-green font-semibold cursor-pointer hover:underline" onclick="openInstallModal()">Unlock Full Version →</span>
     </div>
 
@@ -376,11 +376,22 @@ tailwind.config = {
             <div class="w-5 h-5 rounded flex items-center justify-center" style="background: linear-gradient(135deg, #76b900, #4a7a00);">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.28L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h5v-5l-2.28 2.28C6.81 18 5 15.21 5 12c0-4.08 3.05-7.44 7-7.93V2.05z"/></svg>
             </div>
-            <h2 class="text-base font-bold text-white">Install Full Agentic BioNeMo</h2>
+            <h2 id="modalTitle" class="text-base font-bold text-white">Install Full Agentic BioNeMo</h2>
           </div>
-          <p class="text-xs text-gray-500">Fully automated setup — zero config headache. Works on any machine.</p>
+          <p id="modalSubtitle" class="text-xs text-gray-500">Fully automated setup — zero config headache. Works on any machine.</p>
         </div>
         <button onclick="closeInstallModal()" class="text-gray-600 hover:text-gray-300 text-xl leading-none p-1">×</button>
+      </div>
+
+      <!-- Trial Expired Warning Banner -->
+      <div id="trialExpiredAlert" class="hidden mt-3 p-3.5 rounded-xl bg-red-950/40 border border-red-500/40 text-xs animate-fade-in">
+        <div class="flex items-center gap-2 font-bold text-red-400 mb-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          <span>Free Trial Quota Reached (2 of 2 Runs Used)</span>
+        </div>
+        <p class="text-gray-300 leading-relaxed">
+          Demo trials are strictly limited to 2 discovery campaigns per device and network. To run <strong>unlimited campaigns</strong> with custom PDB targets, 10,000+ candidates, and GPU acceleration, launch the automated local installer below.
+        </p>
       </div>
 
       <!-- Mode toggle -->
@@ -497,6 +508,84 @@ tailwind.config = {
 <div id="toast" class="toast hide">✅ Copied to clipboard!</div>
 
 <script>
+// ─── Client Hardware & Canvas Fingerprinting (Anti-Bypass) ───────────────────
+function getClientFingerprint() {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = "top";
+    ctx.font = "14px 'Arial'";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#f60";
+    ctx.fillRect(125,1,62,20);
+    ctx.fillStyle = "#069";
+    ctx.fillText("AgenticBioNeMo:Trial:AntiBypass", 2, 15);
+    ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+    ctx.fillText("AgenticBioNeMo:Trial:AntiBypass", 4, 17);
+    const b64 = canvas.toDataURL();
+    let hash = 0;
+    for (let i = 0; i < b64.length; i++) {
+      hash = ((hash << 5) - hash) + b64.charCodeAt(i);
+      hash |= 0;
+    }
+    const gl = document.createElement('canvas').getContext('webgl');
+    const debugInfo = gl ? gl.getExtension('WEBGL_debug_renderer_info') : null;
+    const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'no-gl';
+    return Math.abs(hash).toString(16) + '_' + btoa(renderer).slice(0, 16) + '_' + screen.width + 'x' + screen.height;
+  } catch (e) {
+    return 'fp_' + screen.width + 'x' + screen.height + '_' + (navigator.hardwareConcurrency || 4);
+  }
+}
+const CLIENT_FP = getClientFingerprint();
+
+let trialState = { allowed: true, runs_used: 0, runs_remaining: 2, max_runs: 2, is_locked: false };
+
+async function fetchTrialStatus() {
+  try {
+    const res = await fetch('/api/trial-status', {
+      headers: { 'X-Client-Fingerprint': CLIENT_FP }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      updateTrialUI(data);
+    }
+  } catch (e) {
+    console.error('Could not fetch trial status:', e);
+  }
+}
+
+function updateTrialUI(status) {
+  trialState = status;
+  const badge = document.getElementById('trialBadge');
+  const dot = document.getElementById('trialDot');
+  const text = document.getElementById('trialText');
+  const runBtn = document.getElementById('runBtn');
+  const runLabel = document.getElementById('runLabel');
+
+  if (status.is_locked || status.runs_remaining === 0) {
+    if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse";
+    if (text) text.innerHTML = `<span class="text-red-400 font-bold">🔒 Free Trial Expired (2/2 Used)</span> • `;
+    if (runBtn && !isRunning) {
+      runBtn.onclick = () => openInstallModal(true);
+      runBtn.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(118, 185, 0, 0.15))';
+      runBtn.style.border = '1px solid rgba(239, 68, 68, 0.6)';
+      if (runLabel) runLabel.textContent = '🔒 Free Trial Limit Reached (2/2 Used) — Get Full Local App';
+    }
+  } else if (status.runs_remaining === 1) {
+    if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse";
+    if (text) text.innerHTML = `<span class="text-yellow-400 font-semibold">⚡ Free Trial: 1 of 2 Runs Left</span> • `;
+    if (runLabel && !isRunning) runLabel.textContent = '🚀 Run Discovery (1 Free Trial Run Left)';
+  } else {
+    if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-nvidia-green animate-pulse";
+    if (text) text.innerHTML = `<span class="text-gray-300">Free Trial: 2 of 2 Runs Available</span> • `;
+    if (runLabel && !isRunning) runLabel.textContent = '🚀 Run Autonomous Discovery';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  fetchTrialStatus();
+});
+
 // ─── Target Database ────────────────────────────────────────────────────────
 const TARGETS = {
   'KRAS G12D': { pdb: '8AZV', indication: 'Colorectal/NSCLC', pocket: 'Switch II', mutant: 'G12D', color: '#76b900' },
@@ -559,20 +648,59 @@ function logEntry(icon, agent, role, text, color) {
 // ─── Run Discovery ───────────────────────────────────────────────────────────
 async function runDiscovery() {
   if (isRunning) return;
-  isRunning = true;
 
+  // Pre-check client trial status
+  if (trialState.is_locked || trialState.runs_remaining <= 0) {
+    openInstallModal(true);
+    showToast('🔒 Free trial limit reached (2/2 runs used). Upgrade to the Full Local App!');
+    return;
+  }
+
+  isRunning = true;
   const target = document.getElementById('targetSelect').value;
   const candidates = parseInt(document.getElementById('candidateSlider').value);
   const info = TARGETS[target];
 
   // Reset UI
   document.getElementById('agentLog').innerHTML = '';
-  document.getElementById('leadsContainer').innerHTML = '<div class="text-center text-gray-600 text-xs py-4">Running discovery pipeline...</div>';
+  document.getElementById('leadsContainer').innerHTML = '<div class="text-center text-gray-600 text-xs py-4">Authorizing trial slot & preparing pipeline...</div>';
   resetAgents();
-  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressBar').style.width = '5%';
   document.getElementById('streamDot').style.background = '#76b900';
   document.getElementById('runBtn').disabled = true;
-  document.getElementById('runLabel').textContent = 'Running Discovery...';
+  document.getElementById('runLabel').textContent = 'Authorizing & Running...';
+
+  // ─ Anti-Bypass Backend Enforcement ─
+  let backendData = null;
+  try {
+    const res = await fetch(`/api/run?target=${encodeURIComponent(target)}&candidates=${candidates}`, {
+      method: 'POST',
+      headers: {
+        'X-Client-Fingerprint': CLIENT_FP
+      }
+    });
+
+    if (res.status === 403) {
+      const errData = await res.json();
+      isRunning = false;
+      document.getElementById('runBtn').disabled = false;
+      updateTrialUI({ runs_used: errData.runs_used || 2, runs_remaining: 0, is_locked: true, max_runs: 2 });
+      openInstallModal(true);
+      showToast('🔒 Free trial limit reached (2/2 runs used). Install the Full Local App for unlimited runs!');
+      return;
+    }
+
+    if (!res.ok) {
+      throw new Error(`Server returned HTTP ${res.status}`);
+    }
+
+    backendData = await res.json();
+    if (backendData.trial_status) {
+      updateTrialUI(backendData.trial_status);
+    }
+  } catch (err) {
+    console.warn('API run warning:', err);
+  }
 
   const setProgress = (p) => {
     document.getElementById('progressBar').style.width = p + '%';
@@ -648,9 +776,22 @@ async function runDiscovery() {
   renderPareto();
 
   document.getElementById('streamDot').style.background = '#76b900';
-  document.getElementById('runBtn').disabled = false;
-  document.getElementById('runLabel').textContent = '🔄 Run Again';
   isRunning = false;
+
+  if (trialState.is_locked || trialState.runs_remaining === 0) {
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('runBtn').onclick = () => openInstallModal(true);
+    document.getElementById('runBtn').style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(118, 185, 0, 0.15))';
+    document.getElementById('runBtn').style.border = '1px solid rgba(239, 68, 68, 0.6)';
+    document.getElementById('runLabel').textContent = '🔒 Trial Limit Reached (2/2) — Get Full Local App';
+    showToast('🎉 Free Trial Complete! Launch the Full Local App for unlimited discovery.');
+    setTimeout(() => {
+      openInstallModal(true);
+    }, 1200);
+  } else {
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('runLabel').textContent = `🚀 Run Discovery (${trialState.runs_remaining} Free Trial Left)`;
+  }
 }
 
 // ─── Render Leads ─────────────────────────────────────────────────────────
@@ -758,8 +899,23 @@ function renderPareto() {
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────
-function openInstallModal() {
-  document.getElementById('installModal').classList.remove('hidden');
+function openInstallModal(isTrialExpired=false) {
+  const modal = document.getElementById('installModal');
+  const alertBox = document.getElementById('trialExpiredAlert');
+  if (isTrialExpired || trialState.is_locked || trialState.runs_remaining === 0) {
+    if (alertBox) alertBox.classList.remove('hidden');
+    const t = document.getElementById('modalTitle');
+    if (t) t.textContent = '🔒 Free Trial Limit Reached (2/2 Runs Used)';
+    const s = document.getElementById('modalSubtitle');
+    if (s) s.textContent = 'You have used both free trial runs for your device/network. Launch the Full Local App for 100% UNLIMITED discovery campaigns:';
+  } else {
+    if (alertBox) alertBox.classList.add('hidden');
+    const t = document.getElementById('modalTitle');
+    if (t) t.textContent = 'Install Full Agentic BioNeMo';
+    const s = document.getElementById('modalSubtitle');
+    if (s) s.textContent = 'Fully automated setup — zero config headache. Works on any machine.';
+  }
+  modal.classList.remove('hidden');
   document.body.classList.add('modal-open');
 }
 function closeInstallModal() {
