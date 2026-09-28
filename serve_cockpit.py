@@ -14,6 +14,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -183,7 +186,9 @@ def trigger_run(request: Request, target: str = Query("KRAS G12D"), candidates: 
         return resp
 
     # 3. Run Autonomous Discovery Campaign
-    orchestrator = AgenticScientistOrchestrator(mock=True)
+    api_key = os.getenv("NVIDIA_API_KEY", "").strip()
+    use_mock = os.getenv("USE_MOCK", "false").lower() == "true" or not api_key
+    orchestrator = AgenticScientistOrchestrator(api_key=api_key, mock=use_mock)
     dossier = orchestrator.run_discovery_campaign(
         target_query=target, num_candidates=safe_candidates, output_dir=RESULTS_DIR
     )
