@@ -28,4 +28,4 @@ COPY . .
 EXPOSE 8000 8501
 
 # Default: Glassmorphism Web Cockpit
-CMD ["python", "serve_cockpit.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "serve_cockpit.py"]

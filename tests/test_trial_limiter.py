@@ -132,3 +132,33 @@ def test_persistence_across_server_restarts(limiter):
     ok2, res2 = new_server_limiter.consume_trial_run(session, fp, ip, "HER2")
     assert ok2 is False
     assert res2["error"] == "TRIAL_LIMIT_EXCEEDED"
+
+
+def test_bot_user_agent_shield(limiter):
+    """Automated curl / python-requests bots are immediately rejected."""
+    ok, res = limiter.consume_trial_run(
+        session_id="bot_sess",
+        fp_hash="bot_fp",
+        ip_str="198.51.100.99",
+        user_agent="curl/8.1.2"
+    )
+    assert ok is False
+    assert res["error"] == "BOT_REQUEST_FORBIDDEN"
+
+
+def test_global_daily_circuit_breaker(limiter):
+    """When global daily cap is reached, all further requests are blocked."""
+    limiter.max_global_daily_runs = 2
+
+    # User 1 run 1
+    ok1, _ = limiter.consume_trial_run("u1", "fp1", "198.51.100.1")
+    assert ok1 is True
+
+    # User 2 run 1
+    ok2, _ = limiter.consume_trial_run("u2", "fp2", "198.51.100.2")
+    assert ok2 is True
+
+    # User 3 attempts run -> Global Daily Cap reached!
+    ok3, res3 = limiter.consume_trial_run("u3", "fp3", "198.51.100.3")
+    assert ok3 is False
+    assert res3["error"] == "GLOBAL_DAILY_LIMIT_REACHED"

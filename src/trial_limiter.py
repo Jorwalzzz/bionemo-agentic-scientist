@@ -1,12 +1,13 @@
 """
-Agentic BioNeMo - Anti-Bypass Trial Rate Limiter & Fingerprinting Engine
+Agentic BioNeMo - Enterprise Anti-Bypass Trial Rate Limiter & Fingerprinting Engine
 
-Provides multi-layered defense to enforce a strict maximum of 1 free trial run (protecting API credits & GPU resources):
-1. Cryptographically signed HMAC-SHA256 HttpOnly session cookies.
-2. High-entropy client canvas/WebGL/hardware fingerprint hashing.
-3. Socket-level Client IP tracking (prevents X-Forwarded-For spoofing).
-4. IPv4 /24 and IPv6 /48 subnet tracking (prevents rapid local IP hopping).
-5. Atomic thread-safe ledger serialization to persistent disk storage.
+Provides 6 comprehensive security layers to strictly protect private NVIDIA API credits & compute:
+1. Strict 1-Run Limit per device / session / IP / subnet.
+2. Global Daily Circuit Breaker (hard ceiling on maximum runs across all users globally/day).
+3. Cloudflare & Reverse-Proxy True IP Extraction (CF-Connecting-IP & X-Forwarded-For).
+4. Cryptographically signed HMAC-SHA256 HttpOnly session cookies.
+5. High-entropy client canvas/WebGL/hardware fingerprint hashing (anti-incognito).
+6. Anti-Bot Scraper Shield (blocks curl, python-requests, automated scrapers).
 """
 
 import os
@@ -29,6 +30,13 @@ LEDGER_PATH = os.environ.get("TRIAL_LEDGER_PATH", os.path.join(DATA_DIR, "trial_
 SECRET_KEY_PATH = os.path.join(DATA_DIR, ".trial_secret")
 MAX_TRIAL_RUNS = int(os.environ.get("MAX_TRIAL_RUNS", "1"))
 MAX_SUBNET_RUNS = int(os.environ.get("MAX_SUBNET_RUNS", "2"))
+MAX_GLOBAL_DAILY_RUNS = int(os.environ.get("MAX_GLOBAL_DAILY_RUNS", "25"))
+
+# Disallowed automated bot scrapers attempting to call /api/run
+BLOCKED_USER_AGENTS = (
+    "curl", "python-requests", "aiohttp", "wget", "httpie",
+    "postmanruntime", "scrapy", "go-http-client", "apache-httpclient"
+)
 
 
 def _get_or_create_secret_key() -> bytes:
@@ -53,17 +61,19 @@ def _get_or_create_secret_key() -> bytes:
 
 
 class TrialLimiter:
-    """Thread-safe, anti-exploit trial rate limiter with persistent disk state."""
+    """Thread-safe, anti-exploit trial rate limiter with persistent disk state & global circuit breaker."""
 
     def __init__(
         self,
         ledger_path: str = LEDGER_PATH,
         max_runs: int = MAX_TRIAL_RUNS,
-        max_subnet_runs: int = MAX_SUBNET_RUNS
+        max_subnet_runs: int = MAX_SUBNET_RUNS,
+        max_global_daily_runs: int = MAX_GLOBAL_DAILY_RUNS
     ):
         self.ledger_path = ledger_path
         self.max_runs = max_runs
         self.max_subnet_runs = max_subnet_runs
+        self.max_global_daily_runs = max_global_daily_runs
         self._secret_key = _get_or_create_secret_key()
         self._lock = threading.Lock()
         self._ledger: Dict[str, Any] = self._load_ledger()
@@ -71,12 +81,13 @@ class TrialLimiter:
     def _load_ledger(self) -> Dict[str, Any]:
         """Load ledger from disk or initialize empty ledger."""
         default_ledger = {
-            "version": 1,
+            "version": 2,
             "max_runs": self.max_runs,
+            "daily_usage": {},  # "YYYY-MM-DD" -> count
             "sessions": {},     # session_id -> {runs, created_at, last_used, ips, fps}
             "fingerprints": {}, # fp_hash -> {runs, first_seen, last_seen, ips, sessions}
             "ips": {},          # ip -> {runs, first_seen, last_seen, sessions}
-            "subnets": {},      # subnet -> {runs}
+            "subnets": {},      # subnet -> count
             "history": []       # [{timestamp, session_id, ip, fp, target, runs_after}]
         }
         if os.path.exists(self.ledger_path):
@@ -84,6 +95,8 @@ class TrialLimiter:
                 with open(self.ledger_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, dict) and "sessions" in data:
+                        if "daily_usage" not in data:
+                            data["daily_usage"] = {}
                         return data
             except Exception as e:
                 print(f"[TrialLimiter] Warning: could not load ledger, reinitializing: {e}")
@@ -102,11 +115,19 @@ class TrialLimiter:
             print(f"[TrialLimiter] Error writing ledger to disk: {e}")
 
     # ─────────────────────────────────────────────────────────────
-    # Cryptographic Session Cookie Handling
+    # Bot Shield & Token Handling
     # ─────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def is_bot_user_agent(user_agent: Optional[str]) -> bool:
+        """Check if incoming request is from an automated scraping tool."""
+        if not user_agent:
+            return False
+        ua_lower = user_agent.lower().strip()
+        return any(bot in ua_lower for bot in BLOCKED_USER_AGENTS)
+
     def create_signed_session_token(self, session_id: Optional[str] = None) -> str:
-        """Generate a tamper-proof session token: <session_id>.<timestamp>.<hmac_signature>"""
+        """Generate a tamper-proof session token: <session_id>:<timestamp>:<hmac_signature>"""
         if not session_id:
             session_id = secrets.token_hex(16)
         ts = str(int(time.time()))
@@ -158,10 +179,7 @@ class TrialLimiter:
         user_agent: Optional[str],
         accept_lang: Optional[str] = None
     ) -> str:
-        """
-        Compute high-entropy SHA-256 fingerprint from client hardware canvas/webgl hash
-        combined with platform environment headers.
-        """
+        """Compute high-entropy SHA-256 fingerprint from client hardware canvas/webgl hash."""
         raw = f"{client_fp or 'unknown_fp'}|{user_agent or 'unknown_ua'}|{accept_lang or 'unknown_lang'}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:32]
 
@@ -175,14 +193,23 @@ class TrialLimiter:
         fp_hash: str,
         ip_str: str
     ) -> Dict[str, Any]:
-        """
-        Check current trial usage without consuming.
-        Calculates maximum runs used across session, fingerprint, IP, and subnet.
-        """
+        """Check current trial usage without consuming."""
         with self._lock:
+            today = time.strftime("%Y-%m-%d", time.gmtime())
+            daily_count = self._ledger.get("daily_usage", {}).get(today, 0)
+            if daily_count >= self.max_global_daily_runs:
+                return {
+                    "allowed": False,
+                    "runs_used": self.max_runs,
+                    "runs_remaining": 0,
+                    "max_runs": self.max_runs,
+                    "is_locked": True,
+                    "circuit_breaker_active": True,
+                    "reason": "Global daily demo quota reached. Please use the Local 1-Click Installer."
+                }
+
             norm_ip, subnet = self.normalize_ip(ip_str)
 
-            # Check individual dimensions
             session_runs = 0
             if session_id and session_id in self._ledger["sessions"]:
                 session_runs = self._ledger["sessions"][session_id].get("runs", 0)
@@ -191,7 +218,6 @@ class TrialLimiter:
             if fp_hash and fp_hash in self._ledger["fingerprints"]:
                 fp_runs = self._ledger["fingerprints"][fp_hash].get("runs", 0)
 
-            # Special exemption for local loopback in testing/dev
             is_local = norm_ip == "127.0.0.1"
             ip_runs = 0
             if not is_local and norm_ip in self._ledger["ips"]:
@@ -201,8 +227,6 @@ class TrialLimiter:
             if not is_local and subnet in self._ledger["subnets"]:
                 subnet_runs = self._ledger["subnets"].get(subnet, 0)
 
-            # Effective runs is the maximum seen across any vector
-            # (If someone cleared cookies, fp_runs or ip_runs will catch them)
             runs_used = max(session_runs, fp_runs, ip_runs)
             runs_remaining = max(0, self.max_runs - runs_used)
             allowed = runs_used < self.max_runs
@@ -213,7 +237,7 @@ class TrialLimiter:
             elif not allowed:
                 reason = f"Free trial limit reached ({runs_used}/{self.max_runs} runs used)"
             else:
-                reason = "Trial runs available"
+                reason = "Trial run available"
 
             return {
                 "allowed": allowed,
@@ -224,6 +248,7 @@ class TrialLimiter:
                 "fp_runs": fp_runs,
                 "ip_runs": ip_runs,
                 "is_locked": not allowed,
+                "circuit_breaker_active": False,
                 "reason": reason
             }
 
@@ -232,17 +257,40 @@ class TrialLimiter:
         session_id: str,
         fp_hash: str,
         ip_str: str,
-        target_name: str = "Unknown"
+        target_name: str = "Unknown",
+        user_agent: Optional[str] = None
     ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Atomically verify availability and consume 1 trial run.
-        Updates session, fingerprint, IP, and subnet entries simultaneously.
-        """
+        """Atomically verify availability and consume 1 trial run."""
+        # 1. Anti-Bot Filter
+        if self.is_bot_user_agent(user_agent):
+            return False, {
+                "allowed": False,
+                "error": "BOT_REQUEST_FORBIDDEN",
+                "message": "Automated scripts are blocked on the trial demo to protect API credits. Launch the Local App for script access."
+            }
+
         with self._lock:
+            # 2. Global Circuit Breaker (Hard Ceiling per calendar day)
+            today = time.strftime("%Y-%m-%d", time.gmtime())
+            if "daily_usage" not in self._ledger:
+                self._ledger["daily_usage"] = {}
+            daily_count = self._ledger["daily_usage"].get(today, 0)
+
+            if daily_count >= self.max_global_daily_runs:
+                return False, {
+                    "allowed": False,
+                    "runs_used": self.max_runs,
+                    "runs_remaining": 0,
+                    "max_runs": self.max_runs,
+                    "is_locked": True,
+                    "error": "GLOBAL_DAILY_LIMIT_REACHED",
+                    "message": "Today's global discovery quota has been reached to protect server & API credits. Launch the Local App for unlimited execution."
+                }
+
             norm_ip, subnet = self.normalize_ip(ip_str)
             is_local = norm_ip == "127.0.0.1"
 
-            # 1. Evaluate current usage
+            # 3. Individual user / device limit
             session_runs = self._ledger["sessions"].get(session_id, {}).get("runs", 0)
             fp_runs = self._ledger["fingerprints"].get(fp_hash, {}).get("runs", 0)
             ip_runs = self._ledger["ips"].get(norm_ip, {}).get("runs", 0) if not is_local else 0
@@ -258,7 +306,7 @@ class TrialLimiter:
                     "max_runs": self.max_runs,
                     "is_locked": True,
                     "error": "TRIAL_LIMIT_EXCEEDED",
-                    "message": f"Free trial limit reached ({current_runs}/{self.max_runs} runs used). To run unlimited discovery campaigns, launch the Full Local App."
+                    "message": f"Free trial limit reached ({current_runs}/{self.max_runs} run used). Launch the Full Local App for unlimited campaigns."
                 }
 
             if not is_local and subnet_runs >= self.max_subnet_runs:
@@ -269,14 +317,17 @@ class TrialLimiter:
                     "max_runs": self.max_runs,
                     "is_locked": True,
                     "error": "SUBNET_QUOTA_EXCEEDED",
-                    "message": "Subnet trial quota exceeded. Please launch the Full Local App for unlimited access."
+                    "message": "Subnet trial quota exceeded. Launch the Full Local App for unlimited access."
                 }
 
-            # 2. Increment new count across all vector records
+            # 4. Increment all counters atomically
             new_run_count = current_runs + 1
             now_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
-            # Update session record
+            # Update daily circuit breaker
+            self._ledger["daily_usage"][today] = daily_count + 1
+
+            # Update session
             if session_id not in self._ledger["sessions"]:
                 self._ledger["sessions"][session_id] = {
                     "runs": 0, "created_at": now_ts, "ips": [], "fps": []
@@ -288,7 +339,7 @@ class TrialLimiter:
             if fp_hash not in self._ledger["sessions"][session_id]["fps"]:
                 self._ledger["sessions"][session_id]["fps"].append(fp_hash)
 
-            # Update fingerprint record
+            # Update fingerprint
             if fp_hash not in self._ledger["fingerprints"]:
                 self._ledger["fingerprints"][fp_hash] = {
                     "runs": 0, "first_seen": now_ts, "ips": [], "sessions": []
@@ -300,7 +351,7 @@ class TrialLimiter:
             if session_id not in self._ledger["fingerprints"][fp_hash]["sessions"]:
                 self._ledger["fingerprints"][fp_hash]["sessions"].append(session_id)
 
-            # Update IP record
+            # Update IP & Subnet
             if not is_local:
                 if norm_ip not in self._ledger["ips"]:
                     self._ledger["ips"][norm_ip] = {
@@ -313,7 +364,7 @@ class TrialLimiter:
 
                 self._ledger["subnets"][subnet] = self._ledger["subnets"].get(subnet, 0) + 1
 
-            # Append to immutable audit log
+            # Audit record
             self._ledger["history"].append({
                 "timestamp": now_ts,
                 "session_id": session_id,
@@ -326,22 +377,22 @@ class TrialLimiter:
             # Save state to disk immediately
             self._save_ledger()
 
-            runs_rem = max(0, self.max_runs - new_run_count)
             return True, {
                 "allowed": True,
                 "runs_used": new_run_count,
-                "runs_remaining": runs_rem,
+                "runs_remaining": 0,
                 "max_runs": self.max_runs,
-                "is_locked": runs_rem == 0,
-                "message": f"Run {new_run_count} of {self.max_runs} completed. {runs_rem} trial run(s) remaining."
+                "is_locked": True,
+                "message": "Demo trial run completed. 0 free trial runs remaining."
             }
 
     def reset_for_tests(self) -> None:
         """Utility for test suites to clear ledger state."""
         with self._lock:
             self._ledger = {
-                "version": 1,
+                "version": 2,
                 "max_runs": self.max_runs,
+                "daily_usage": {},
                 "sessions": {},
                 "fingerprints": {},
                 "ips": {},

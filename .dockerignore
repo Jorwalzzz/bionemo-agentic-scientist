@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+tests
+.coverage
+htmlcov
+data/.trial_secret
+data/trial_ledger.json
+conversation_history
+.env

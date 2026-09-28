@@ -1,3 +1,13 @@
+---
+title: Agentic BioNeMo — AI Drug Discovery Scientist
+emoji: 🧬
+colorFrom: green
+colorTo: indigo
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # Agentic BioNeMo: Autonomous Multi-Agent AI Scientist for Target-to-Lead Drug Discovery
 
 [![CI](https://github.com/Jorwalzzz/bionemo-agentic-scientist/actions/workflows/ci.yml/badge.svg)](https://github.com/Jorwalzzz/bionemo-agentic-scientist/actions)
