@@ -170,7 +170,16 @@ NVIDIA_API_KEY=nvapi-your-nvidia-api-key-here
 ```
 *(Obtain your free API credits and key from [NVIDIA build.nvidia.com](https://build.nvidia.com)).*
 
-### 3. Run Benchmark (Zero-Configuration CI/CD Mock Mode)
+### 3. Launch Interactive Web Studio Cockpit
+
+To run the interactive Autonomous AI Drug Discovery Studio locally:
+
+```bash
+python serve_cockpit.py
+```
+Open **`http://localhost:8000`** in any browser. You can click **`🧭 10-Step Interactive Guide`** to explore the entire architecture, run live micro-benchmarks, fold sequences with ESMFold, design leads, stress-test resistance mutations, compile Opentrons OT-2 robotics code, and download FDA IND briefing dossiers.
+
+### 4. Run Benchmark CLI (Zero-Configuration CI/CD Mock Mode)
 
 If you do not have an active API key or are running in an automated CI/CD pipeline, the benchmark suite automatically simulates realistic NVIDIA NIM response envelopes:
 
@@ -180,7 +189,7 @@ python run_benchmark.py --mock --save-plots
 
 This will run all 5 sample complexes, display the console summary table, export `results/benchmark_summary.csv`, and render the high-resolution charts in `results/`.
 
-### 4. Run Benchmark (Live Production NVIDIA NIM Endpoints)
+### 5. Run Benchmark CLI (Live Production NVIDIA NIM Endpoints)
 
 With an active `NVIDIA_API_KEY` set in your `.env` or passed via CLI:
 
