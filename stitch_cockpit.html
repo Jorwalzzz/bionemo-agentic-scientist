@@ -1612,7 +1612,7 @@ function selectLead(i) {
       </div>
 
       <!-- Interactive Chemical Workbench (Human-in-the-Loop) -->
-      <div class="p-2.5 rounded-xl bg-surface-elevated border border-surface-border">
+      <div id="workbenchCard" class="p-2.5 rounded-xl bg-surface-elevated border border-surface-border">
         <div class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider mb-1 flex items-center justify-between">
           <span>🧪 Chemical Workbench</span>
           <span class="text-[10px] text-gray-500 font-mono">Live Re-Dock</span>
@@ -2193,7 +2193,7 @@ const TOUR_STEPS = [
       } else {
         showToast('ℹ️ Launch the council in Step 4 first to generate candidate leads.');
       }
-      const table = document.getElementById('leadsTable');
+      const table = document.getElementById('leadsContainer');
       if (table) table.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   },

@@ -611,6 +611,7 @@ async def api_resistance_evolve(request: Request):
         "resistance_detected": scan.resistance_detected,
         "evolved_lead_id": scan.evolved_lead_id,
         "evolved_smiles": scan.evolved_lead_smiles,
+        "evolved_lead_smiles": scan.evolved_lead_smiles,
         "evolved_affinity": scan.evolved_affinity,
         "delta_recovery": scan.delta_recovery,
         "nim_calls_made": scan.nim_calls_made,
