@@ -1,6 +1,6 @@
 # NVIDIA BioNeMo & NIM Inference Benchmark Suite
 
-[![CI / Pytest](https://img.shields.io/badge/pytest-33%20passed-brightgreen.svg)](tests/)
+[![CI / Pytest](https://img.shields.io/badge/pytest-43%20passed-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/)
 [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA-BioNeMo%20NIM-76B900.svg)](https://build.nvidia.com)
 [![FDA IND](https://img.shields.io/badge/FDA%20IND-21%20CFR%20312%20Automated-blue.svg)](results/FDA_IND_Section2_Briefing_KRAS_G12D.pdf)
@@ -21,7 +21,7 @@ This platform doesn't just sample molecules—it orchestrates an end-to-end phar
 3. **🤖 Opentrons OT-2 Robotic Pipetting Protocol**: Automatically translates AI-predicted retrosynthesis routes into executable Python automation scripts (Opentrons API Level 2.15) with complete deck layouts, temperature incubation modules, liquid transfers, and companion wet-lab SOP cards.
 4. **🧬 ESMFold De Novo Structure Generation**: Folds arbitrary 20 IUPAC amino acid sequences into atomic 3D coordinates on the fly with per-residue pLDDT confidence coloring.
 5. **⚡ Live Hardware Acceleration Benchmark**: Measures the user's host laptop CPU live and demonstrates a **~50×–70× speedup** when offloading to NVIDIA H100 Tensor Core microservices.
-6. **✨ Guided Auto-Tour Mode**: A 1-click interactive walkthrough in the web cockpit demonstrating the full pipeline in 90 seconds.
+6. **🧭 10-Step Interactive Guided Tour**: A comprehensive, self-paced walkthrough explaining the platform architecture, underlying science, and NVIDIA technologies with interactive visitor instructions and single-click actions.
 
 ### 📦 Pre-Compiled Golden Deliverables (Direct Inspection)
 | Deliverable | Description | Direct Link |
