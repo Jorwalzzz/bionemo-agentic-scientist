@@ -38,11 +38,14 @@ console = Console(theme=custom_theme, force_terminal=True)
 def display_agent_message(msg: AgentMessage):
     """Renders real-time agent thoughts and actions in rich terminal panels."""
     icons = {
-        "TargetScout": ("*", "scout"),
-        "GenerativeChemist": ("+", "chemist"),
-        "ADMETCritic": ("!", "critic"),
-        "BiophysicsDocking": ("#", "docking"),
-        "PrincipalInvestigator": ("$", "pi")
+        "TargetScout": ("🎯", "scout"),
+        "GenerativeChemist": ("🧪", "chemist"),
+        "ADMETCritic": ("🛡️", "critic"),
+        "BiophysicsDocking": ("🔬", "docking"),
+        "DiffDockDocking": ("🔬", "docking"),
+        "PIParetoArbiter": ("👩‍🔬", "pi"),
+        "RetrosynthesisAgent": ("⚗️", "chemist"),
+        "PrincipalInvestigator": ("👩‍🔬", "pi")
     }
     icon, style = icons.get(msg.agent_name, (">", "cyan"))
     
@@ -52,7 +55,7 @@ def display_agent_message(msg: AgentMessage):
 
 def main():
     parser = argparse.ArgumentParser(description="Agentic BioNeMo: Autonomous Multi-Agent AI Drug Discovery Scientist")
-    parser.add_argument("--target", type=str, default="KRAS G12D", choices=["KRAS G12D", "EGFR T790M", "BRAF V600E", "SARS-CoV-2 Mpro", "HER2"], help="Clinical target query")
+    parser.add_argument("--target", type=str, default="KRAS G12D", help="Clinical target query or 4-letter RCSB PDB code (e.g. KRAS G12D, EGFR T790M, 6LU7, 2ITZ)")
     parser.add_argument("--candidates", type=int, default=12, help="Number of chemical candidates to generate per round")
     parser.add_argument("--mock", action="store_true", default=True, help="Run in zero-credit simulation mock mode")
     parser.add_argument("--no-feedback", action="store_true", help="Disable PI autonomous feedback loop")
@@ -113,6 +116,13 @@ def main():
     plot_chemical_leads_grid(dossier.top_leads, output_path=os.path.join(args.output, "top_leads_chemical_grid.png"))
     console.print(f"[bold green]Plots saved to {args.output}/[/bold green]")
     console.print(f"[bold green]Formal Dossier authored to {args.output}/CANDIDATE_SELECTION_DOSSIER.md[/bold green]")
+    if orchestrator.latest_retrosynthesis_plan:
+        rp = orchestrator.latest_retrosynthesis_plan
+        console.print(f"\n[bold green]RETROSYNTHESIS ROUTE PLAN (Lead Candidate: {rp.candidate_id})[/bold green]")
+        console.print(f"[cyan]Feasibility: {rp.overall_feasibility} | Synthesis Steps: {rp.num_steps}[/cyan]")
+        for s in rp.steps:
+            console.print(f"  Step {s.step_number}: [yellow]{s.reaction_type}[/] ({s.difficulty}) -> Yield ~{s.estimated_yield_pct}% | Reagents: {', '.join(s.reagents)}")
+        console.print(f"  Starting Materials: [dim]{', '.join(rp.starting_materials)}[/dim]\n")
     console.print(f"[bold green]3D Docked Poses saved to {args.output}/top_leads_docked.sdf[/bold green]\n")
 
 if __name__ == "__main__":

@@ -9,7 +9,8 @@ services:
     environment:
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - PYTHONUNBUFFERED=1
-    command: ["python", "serve_cockpit.py", "--host", "0.0.0.0", "--port", "8000"]
+      - PORT=8000
+    command: ["python", "serve_cockpit.py"]
     restart: unless-stopped
 
   dashboard:

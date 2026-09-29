@@ -105,7 +105,7 @@ def get_trial_status(request: Request):
     session_id, signed_token, fp_hash, client_ip, _ = get_client_identifiers(request)
     host = request.headers.get("host", "").lower()
     is_creator = (
-        client_ip in ("127.0.0.1", "localhost", "::1", "testclient")
+        client_ip in ("127.0.0.1", "localhost", "::1")
         or host.startswith(("localhost", "127.0.0.1"))
         or request.query_params.get("creator") in ("1", "true")
         or request.cookies.get("creator_mode") == "1"
@@ -134,13 +134,14 @@ def get_trial_status(request: Request):
         httponly=True,
         samesite="lax"
     )
-    resp.set_cookie(
-        key="creator_mode",
-        value="1",
-        max_age=86400 * 365,
-        httponly=False,
-        samesite="lax"
-    )
+    if is_creator:
+        resp.set_cookie(
+            key="creator_mode",
+            value="1",
+            max_age=86400 * 365,
+            httponly=False,
+            samesite="lax"
+        )
     return resp
 
 
@@ -235,7 +236,7 @@ def trigger_run(request: Request, target: str = Query("KRAS G12D"), candidates: 
     # 2. Strictly enforce trial limit & circuit breaker (Local Creator has Unlimited Runs)
     host = request.headers.get("host", "").lower()
     is_creator = (
-        client_ip in ("127.0.0.1", "localhost", "::1", "testclient")
+        client_ip in ("127.0.0.1", "localhost", "::1")
         or host.startswith(("localhost", "127.0.0.1"))
         or request.query_params.get("creator") in ("1", "true")
         or request.cookies.get("creator_mode") == "1"
