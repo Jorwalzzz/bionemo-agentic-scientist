@@ -6,7 +6,7 @@
 [![FDA IND](https://img.shields.io/badge/FDA%20IND-21%20CFR%20312%20Automated-blue.svg)](results/FDA_IND_Section2_Briefing_KRAS_G12D.pdf)
 [![Opentrons OT-2](https://img.shields.io/badge/Robotics-Opentrons%20OT--2%20Ready-amber.svg)](results/ot2_synthesis_protocol_KRAS_G12D.py)
 [![Adaptive Resistance](https://img.shields.io/badge/Resistance%20Escape-ESM--2%20%2B%20MolMIM-purple.svg)](src/resistance_engine.py)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
 A production-grade, highly reproducible benchmark repository and **Autonomous AI Drug Discovery Operating System** evaluating **NVIDIA BioNeMo & NIM (Inference Microservices)** endpoints for protein language model embedding generation (**ESM-2**), de novo protein structure prediction (**ESMFold**), small-molecule latent exploration (**MolMIM**), and molecular docking pose prediction (**DiffDock**) against baseline unaccelerated host CPU compute.
 
@@ -257,5 +257,9 @@ Special thanks to:
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See the [LICENSE](LICENSE) file for complete terms.
 
+### 🛡️ Why AGPLv3 Protects This Project:
+- **Prevents Proprietary Cloud Forking (SaaS Loophole Closed)**: Under standard MIT or Apache 2.0 licenses, any commercial entity could take your entire code, host it as a closed proprietary cloud platform without sharing a single line of modifications. AGPLv3 **legally obligates** anyone running modified versions over a network to release their complete source code under the same copyleft license.
+- **Enforces Reciprocal Open Science**: Ensures all downstream improvements, algorithmic enhancements, and model integrations remain openly accessible to the scientific community.
+- **Guarantees Author Attribution**: Preserves copyright and original author credit across all distributions and derivatives.
