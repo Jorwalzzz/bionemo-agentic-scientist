@@ -145,6 +145,13 @@ Using an autonomous closed-loop agentic workflow powered by **NVIDIA NIM MolMIM*
 1. **Chemical Synthesis**: Solubilization and solid-phase synthesis targeting the core scaffold of `{best.id if best else 'top lead'}`.
 2. **Biophysical Validation**: Surface Plasmon Resonance (SPR) and Microscale Thermophoresis (MST) to determine $K_D$ dissociation constant against recombinant {target.name}.
 3. **Cellular Target Engagement**: NanoBRET cellular kinase binding assay in mutant cell line.
+
+---
+
+## 🧬 Pipeline Architecture & Acknowledgements
+- **Architected and Engineered by**: [Jorwalzzz](https://github.com/Jorwalzzz)
+- **Generative Molecular Modeling & Docking**: Accelerated via NVIDIA BioNeMo™ & NIM™ microservices (MolMIM, DiffDock, ESM-2).
+- **Cheminformatics & Structural Foundations**: Powered by RDKit, RCSB Protein Data Bank, and 3Dmol.js.
 """
         return DossierReport(
             target=target,

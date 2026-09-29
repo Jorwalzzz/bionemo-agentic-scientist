@@ -218,6 +218,18 @@ python tests/stress_test_loop.py
 
 ---
 
+## 🧬 Architecture & Acknowledgements
+
+**Architected and engineered by [Jorwalzzz](https://github.com/Jorwalzzz).**
+
+Special thanks to:
+* **NVIDIA Developer Program & BioNeMo Team**: For providing GPU cloud inference access to state-of-the-art biological microservices (**DiffDock**, **MolMIM**, and **ESM-2**).
+* **The RDKit Community**: For robust, open-source cheminformatics descriptors, PAINS filters, and sanitization engines.
+* **RCSB Protein Data Bank**: For open macromolecular crystallographic structures.
+* **3Dmol.js**: For interactive WebGL molecular visualization.
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
