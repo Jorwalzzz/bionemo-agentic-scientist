@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: bionemo-agentic-scientist
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn serve_cockpit:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: NVIDIA_API_KEY
+        sync: false

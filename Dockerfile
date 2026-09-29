@@ -1,31 +1,26 @@
-# Production Dockerfile for BioNeMo Agentic Scientist
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
-
-# Install system dependencies for scientific libraries & RDKit
+# Install system dependencies needed for RDKit / molecular processing
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    curl \
     libxrender1 \
     libxext6 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install dependencies
+# Copy dependency definition
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install uvicorn fastapi pydantic
 
-# Copy repository code
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application source and assets
 COPY . .
 
-# Expose Cockpit (8000) and Streamlit (8501)
-EXPOSE 8000 8501
+# Expose dynamic web port
+EXPOSE 8000
 
-# Default: Glassmorphism Web Cockpit
-CMD ["python", "serve_cockpit.py"]
+# Run FastAPI server with proxy headers enabled for Cloudflare / Render edge
+CMD ["uvicorn", "serve_cockpit:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
