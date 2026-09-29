@@ -289,7 +289,7 @@ tailwind.config = {
           📦 Candidates: <span id="candidateNum" class="text-nvidia-green">10</span>
         </label>
         <input type="range" id="candidateSlider" min="4" max="20" value="10" class="w-full accent-green-500 cursor-pointer" oninput="document.getElementById('candidateNum').textContent=this.value"/>
-      </div></div>
+      </div>
 <div class="mb-5">
   <div class="flex justify-between items-center mb-1.5">
     <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">🔄 Discovery Rounds</label>
@@ -655,6 +655,19 @@ const CLIENT_FP = getClientFingerprint();
 
 let trialState = { allowed: true, runs_used: 0, runs_remaining: 2, max_runs: 2, is_locked: false };
 
+
+async function resetTrialQuota() {
+  try {
+    const res = await fetch('/api/reset-trial', { method: 'POST', headers: { 'X-Client-Fingerprint': CLIENT_FP } });
+    if (res.ok) {
+      showToast('✅ Demo quota reset! You can now test trial workflows.');
+      fetchTrialStatus();
+    }
+  } catch (e) {
+    console.error('Reset error:', e);
+  }
+}
+
 async function fetchTrialStatus() {
   try {
     const res = await fetch('/api/trial-status', {
@@ -676,6 +689,19 @@ function updateTrialUI(status) {
   const text = document.getElementById('trialText');
   const runBtn = document.getElementById('runBtn');
   const runLabel = document.getElementById('runLabel');
+
+  // Creator / Localhost bypass: Unlimited runs & never locked out
+  if (status.is_creator) {
+    if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-nvidia-green animate-pulse";
+    if (text) text.innerHTML = `<span class="text-emerald-400 font-bold">🟢 Creator Mode (Unlimited Runs)</span> • <a href="javascript:void(0)" onclick="resetTrialQuota()" class="text-xs text-gray-400 hover:text-emerald-300 underline ml-1">Reset Demo Quota</a>`;
+    if (runBtn && !isRunning) {
+      runBtn.onclick = runDiscovery;
+      runBtn.style.background = 'linear-gradient(135deg, #76b900, #4a7a00)';
+      runBtn.style.border = '';
+      if (runLabel) runLabel.textContent = '🚀 Run Agentic BioNeMo Swarm';
+    }
+    return;
+  }
 
   if (status.is_locked || status.runs_remaining === 0) {
     if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse";

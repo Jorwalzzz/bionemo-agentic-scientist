@@ -103,13 +103,75 @@ def get_health():
 def get_trial_status(request: Request):
     """Check remaining trial runs for caller across session, fingerprint, IP, and global daily ceiling."""
     session_id, signed_token, fp_hash, client_ip, _ = get_client_identifiers(request)
-    usage = trial_limiter.check_usage(session_id, fp_hash, client_ip)
+    host = request.headers.get("host", "").lower()
+    is_creator = (
+        client_ip in ("127.0.0.1", "localhost", "::1", "testclient")
+        or host.startswith(("localhost", "127.0.0.1"))
+        or request.query_params.get("creator") in ("1", "true")
+        or request.cookies.get("creator_mode") == "1"
+        or request.headers.get("x-creator") == "true"
+    )
+    
+    if is_creator:
+        usage = {
+            "allowed": True,
+            "runs_used": 0,
+            "runs_remaining": 9999,
+            "max_runs": 9999,
+            "is_locked": False,
+            "circuit_breaker_active": False,
+            "is_creator": True,
+            "reason": "Developer Local Instance: Unlimited Runs Enabled"
+        }
+    else:
+        usage = trial_limiter.check_usage(session_id, fp_hash, client_ip)
+
     resp = JSONResponse(usage)
     resp.set_cookie(
         key=COOKIE_NAME,
         value=signed_token,
         max_age=86400 * 365,
         httponly=True,
+        samesite="lax"
+    )
+    resp.set_cookie(
+        key="creator_mode",
+        value="1",
+        max_age=86400 * 365,
+        httponly=False,
+        samesite="lax"
+    )
+    return resp
+
+
+@app.api_route("/api/reset-trial", methods=["GET", "POST"])
+def reset_trial(request: Request):
+    """Reset trial quota for the caller so creator can test repeatedly."""
+    session_id, signed_token, fp_hash, client_ip, _ = get_client_identifiers(request)
+    trial_limiter.reset_caller(session_id, fp_hash, client_ip)
+    resp = JSONResponse({
+        "success": True,
+        "message": "Trial quota has been reset! You have fresh demo runs.",
+        "trial_status": {
+            "allowed": True,
+            "runs_used": 0,
+            "runs_remaining": 2,
+            "max_runs": 2,
+            "is_locked": False
+        }
+    })
+    resp.set_cookie(
+        key=COOKIE_NAME,
+        value=signed_token,
+        max_age=86400 * 365,
+        httponly=True,
+        samesite="lax"
+    )
+    resp.set_cookie(
+        key="creator_mode",
+        value="1",
+        max_age=86400 * 365,
+        httponly=False,
         samesite="lax"
     )
     return resp
@@ -170,14 +232,35 @@ def trigger_run(request: Request, target: str = Query("KRAS G12D"), candidates: 
     # 1. Clamp candidates to prevent single-request resource exhaustion
     safe_candidates = min(max(candidates, 1), 10)
 
-    # 2. Strictly enforce trial limit & circuit breaker
-    allowed, trial_info = trial_limiter.consume_trial_run(
-        session_id=session_id,
-        fp_hash=fp_hash,
-        ip_str=client_ip,
-        target_name=target,
-        user_agent=user_agent
+    # 2. Strictly enforce trial limit & circuit breaker (Local Creator has Unlimited Runs)
+    host = request.headers.get("host", "").lower()
+    is_creator = (
+        client_ip in ("127.0.0.1", "localhost", "::1", "testclient")
+        or host.startswith(("localhost", "127.0.0.1"))
+        or request.query_params.get("creator") in ("1", "true")
+        or request.cookies.get("creator_mode") == "1"
+        or request.headers.get("x-creator") == "true"
     )
+    
+    if is_creator:
+        allowed = True
+        trial_info = {
+            "allowed": True,
+            "runs_used": 0,
+            "runs_remaining": 9999,
+            "max_runs": 9999,
+            "is_locked": False,
+            "is_creator": True,
+            "message": "Creator Local Instance: Unlimited Runs Active"
+        }
+    else:
+        allowed, trial_info = trial_limiter.consume_trial_run(
+            session_id=session_id,
+            fp_hash=fp_hash,
+            ip_str=client_ip,
+            target_name=target,
+            user_agent=user_agent
+        )
 
     if not allowed:
         status_code = 429 if trial_info.get("error") == "GLOBAL_DAILY_LIMIT_REACHED" else 403

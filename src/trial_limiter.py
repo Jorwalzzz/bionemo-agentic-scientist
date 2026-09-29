@@ -388,6 +388,17 @@ class TrialLimiter:
                 "message": f"Demo trial run {new_run_count} of {self.max_runs} completed. {runs_rem} free trial run(s) remaining."
             }
 
+    def reset_caller(self, session_id: str, fp_hash: str, ip_str: str) -> None:
+        """Resets usage for a specific caller so creator can test repeatedly."""
+        with self._lock:
+            norm_ip, subnet = self.normalize_ip(ip_str)
+            self._ledger.get('ips', {}).pop(norm_ip, None)
+            self._ledger.get("sessions", {}).pop(session_id, None)
+            self._ledger.get("fingerprints", {}).pop(fp_hash, None)
+            self._ledger.get("ips", {}).pop(ip_str, None)
+            self._ledger.get("subnets", {}).pop(subnet, None)
+            self._save_ledger()
+
     def reset_for_tests(self) -> None:
         """Utility for test suites to clear ledger state."""
         with self._lock:
