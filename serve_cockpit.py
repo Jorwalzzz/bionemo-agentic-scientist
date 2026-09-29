@@ -307,6 +307,10 @@ def trigger_run(request: Request, target: str = Query("KRAS G12D"), candidates: 
         "target": dossier.target.name,
         "pdb_id": dossier.target.pdb_id,
         "residue_count": len(dossier.target.canonical_sequence),
+        "is_esmfold": dossier.target.is_esmfold,
+        "mean_plddt": dossier.target.mean_plddt,
+        "target_pdb": dossier.target.pdb_text,
+        "pocket_residues": dossier.target.pocket_residues,
         "nominated_lead": dossier.top_leads[0].id if dossier.top_leads else "None",
         "binding_affinity": dossier.top_leads[0].binding_affinity if dossier.top_leads else 0.0,
         "screened": dossier.screened_count,
@@ -331,6 +335,8 @@ def trigger_run(request: Request, target: str = Query("KRAS G12D"), candidates: 
                 "admet_verdict": lead.admet_verdict,
                 "is_pareto": lead.is_pareto_optimal,
                 "round": lead.generation_round,
+                "pose_sdf": lead.pose_sdf,
+                "contact_residues": lead.contact_residues,
             }
             for lead in dossier.top_leads
         ]
@@ -366,9 +372,33 @@ async def api_fetch_target(request: Request):
         "sequence_preview": profile.canonical_sequence[:45] + "...",
         "pocket_residues": profile.pocket_residues,
         "reference_ligand": profile.reference_ligand_name,
-        "pocket_coords": profile.target_pocket_coords
+        "pocket_coords": profile.target_pocket_coords,
+        "is_esmfold": profile.is_esmfold,
+        "mean_plddt": profile.mean_plddt,
+        "pdb_text": profile.pdb_text
     }
 
+
+
+@app.get("/api/target/pdb/{pdb_id}")
+def get_target_pdb(pdb_id: str):
+    """Fetches PDB structure text for the 3D WebGL viewer."""
+    clean_id = pdb_id.strip().upper()
+    file_path = os.path.join(BASE_DIR, "data", "targets", f"{clean_id}.pdb")
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            return Response(content=f.read(), media_type="chemical/x-pdb")
+    # Universal fallback via RCSB PDB
+    if len(clean_id) == 4:
+        import urllib.request
+        try:
+            url = f"https://files.rcsb.org/download/{clean_id}.pdb"
+            req = urllib.request.Request(url, headers={"User-Agent": "BioNeMo-Scout/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                return Response(content=r.read().decode("utf-8", errors="replace"), media_type="chemical/x-pdb")
+        except Exception:
+            pass
+    return JSONResponse(status_code=404, content={"error": f"PDB {clean_id} not found."})
 
 @app.post("/api/redock")
 async def api_redock(request: Request):

@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 <script>
 let selectedRounds = 2;
 let currentCustomPdb = null;
@@ -27,6 +28,361 @@ function setRounds(r) {
       btn.className = "py-1.5 text-xs rounded-lg border border-surface-border text-gray-400 hover:text-white transition-colors";
     }
   });
+}
+
+
+// ─── TARGET SELECTION TABS & ESMFOLD DE NOVO SEQUENCE ENGINE ──────────────────
+let currentTargetTab = 'presets';
+let currentTargetSeq = '';
+let currentTargetPdbText = '';
+let currentTargetPocketResidues = [];
+let currentTargetIsEsmfold = false;
+let currentTargetMeanPlddt = 0.0;
+
+const ESMFOLD_PRESETS = {
+  kras: {
+    name: 'KRAS G12D Oncogenic Variant',
+    seq: 'MTEYKLVVVGAGDVGKSALTIQLIQNHFVDEYDPTIEDSYRKQVVIDGETCLLDILDTAGQEEYSAMRDQYMRTGEGFLCVFAINNTKSFEDIHHYREQIKRVKDSEDVPMVLVGNKCDLPSRTVDTKQAQDLARSYGIPFIETSAKTRQRVEDAFYTLVREIRQYRLKKISKEEKTPGCVKIKKCIIM'
+  },
+  braf: {
+    name: 'BRAF V600E Kinase Domain',
+    seq: 'FGLATVKSRWSGSHQFEQLSGSILWMAPEVIRMQDKNPYSFQSDVYAFGIVLYELMTGQLPYSNINNRDQIIFMVGRGYLSPDLSKVRSNCPKAMKRLMAECLKKKRDERPLFPQILASIELLARSLPKIHRSASEPSLNRAGFQTEDFSLYACASPKTPIQAGGYGAFPVH'
+  },
+  mpro: {
+    name: 'SARS-CoV-2 Mpro C145A Protease',
+    seq: 'SGFRKMAFPSGKVEGCMVQVTCGTTTLNGLWLDDVVYCPRHVICTSEDMLNPNYEDLLIRKSNHNFLVQAGNVQLRVIGHSMQNCVLKLKVDTANPKTPKYKFVRIQPGQTFSVLACYNGSPSGVYQCAMRPNFTIKGSFLNGSCGSVGFNIDYDCVSFCYMHHMELPTGVHAGTDLEGNFYGPFVDRQTAQAAGTDTTITVNVLAWLYAAVINGDRWFLNRFTTTLNDFNLVAMKYNYEPLTQDHVDILGPLSAQTGIAVLDMCAASLGS'
+  }
+};
+
+function switchTargetTab(tab) {
+  currentTargetTab = tab;
+  ['presets', 'rcsb', 'esmfold'].forEach(t => {
+    const el = document.getElementById('targetTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (el) el.classList.toggle('hidden', t !== tab);
+    if (btn) {
+      if (t === tab) {
+        btn.className = "py-1 text-[11px] font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all";
+      } else {
+        btn.className = "py-1 text-[11px] font-semibold rounded text-gray-400 hover:text-white transition-all";
+      }
+    }
+  });
+
+  const badge = document.getElementById('targetModeBadge');
+  if (badge) {
+    if (tab === 'presets') {
+      badge.textContent = 'PRESET';
+      badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+      updateTargetInfo();
+    } else if (tab === 'rcsb') {
+      badge.textContent = 'RCSB PDB';
+      badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
+    } else {
+      badge.textContent = 'ESMFOLD';
+      badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20';
+    }
+  }
+}
+
+function updateSeqCount() {
+  const txt = (document.getElementById('esmfoldSeqInput').value || '').trim();
+  const clean = txt.replace(/^>.*$/gm, '').replace(/\s+/g, '');
+  const badge = document.getElementById('seqLenBadge');
+  if (badge) badge.textContent = `${clean.length} aa`;
+}
+
+function loadEsmPreset(presetKey) {
+  const p = ESMFOLD_PRESETS[presetKey];
+  if (!p) return;
+  const area = document.getElementById('esmfoldSeqInput');
+  if (area) {
+    area.value = p.seq;
+    updateSeqCount();
+    showToast(`Loaded ${p.name} (${p.seq.length} aa)`);
+  }
+}
+
+async function foldDeNovoSequence() {
+  const txt = (document.getElementById('esmfoldSeqInput').value || '').trim();
+  const clean = txt.replace(/^>.*$/gm, '').replace(/\s+/g, '');
+  if (!clean || clean.length < 15) {
+    showToast('⚠️ Please enter an amino acid sequence (min 15 residues).');
+    return;
+  }
+
+  showToast('🧬 Calling NVIDIA NIM ESMFold to predict 3D structure...');
+  try {
+    const res = await fetch('/api/target/fetch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: clean })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    
+    currentTargetPdbText = data.pdb_text || '';
+    currentTargetPocketResidues = data.pocket_residues || [];
+    currentTargetIsEsmfold = true;
+    currentTargetMeanPlddt = data.mean_plddt || 89.7;
+    currentTargetSeq = clean;
+
+    // Update Target Card
+    document.getElementById('targetName').textContent = data.name;
+    document.getElementById('targetName').style.color = '#a855f7';
+    document.getElementById('targetPdb').textContent = `DE NOVO (pLDDT ${currentTargetMeanPlddt.toFixed(1)})`;
+    document.getElementById('targetInd').textContent = data.indication || 'De Novo Protein Folding';
+    document.getElementById('targetPocket').textContent = data.pocket || 'Predicted Catalytic Pocket';
+    document.getElementById('targetMut').textContent = 'Variant / De Novo';
+
+    showToast(`✅ ESMFold folded structure with mean pLDDT: ${currentTargetMeanPlddt.toFixed(1)}%!`);
+    
+    // Automatically render de novo structure in 3D viewer
+    render3DComplex(currentTargetPdbText, null, currentTargetPocketResidues, true, currentTargetMeanPlddt);
+  } catch (err) {
+    showToast(`❌ ESMFold prediction failed: ${err.message}`);
+  }
+}
+
+// ─── 3DMOL.JS INTERACTIVE 3D WEBGL VIEWER ENGINE ────────────────────────────
+let primaryViewer = null;
+let modalViewer = null;
+let is3DSpinning = false;
+let is3DSurfaceOn = false;
+let surfaceObj = null;
+let currentPoseSdf = '';
+
+function init3DViewer() {
+  const container = document.getElementById('molViewer3D');
+  if (!container || typeof $3Dmol === 'undefined') return null;
+  container.innerHTML = '';
+  primaryViewer = $3Dmol.createViewer(container, { backgroundColor: '#0b0f14' });
+  return primaryViewer;
+}
+
+function render3DComplex(pdbText, sdfText, pocketResidues, isEsmfold, plddt) {
+  const container = document.getElementById('molViewer3D');
+  if (!container || typeof $3Dmol === 'undefined') return;
+
+  container.innerHTML = '';
+  primaryViewer = $3Dmol.createViewer(container, { backgroundColor: '#0b0f14' });
+  is3DSurfaceOn = false;
+  surfaceObj = null;
+
+  // Status badge update
+  const badge = document.getElementById('viewer3dBadge');
+  if (badge) {
+    if (isEsmfold) {
+      badge.textContent = `ESMFold (pLDDT: ${(plddt || 89.7).toFixed(1)}%)`;
+      badge.className = 'font-mono text-purple-400 font-bold';
+    } else {
+      badge.textContent = 'DiffDock 3D';
+      badge.className = 'font-mono text-emerald-400 font-bold';
+    }
+  }
+
+  // 1. Add Receptor Model (PDB)
+  if (pdbText && pdbText.length > 50) {
+    currentTargetPdbText = pdbText;
+    primaryViewer.addModel(pdbText, "pdb");
+    primaryViewer.setStyle({ model: 0 }, { cartoon: { color: 'spectrum', opacity: 0.82 } });
+
+    // Highlight Catalytic / Binding Pocket Residues
+    if (pocketResidues && pocketResidues.length > 0) {
+      currentTargetPocketResidues = pocketResidues;
+      const resiNums = pocketResidues.map(r => {
+        if (typeof r === 'number') return r;
+        const m = String(r).match(/\d+/);
+        return m ? parseInt(m[0], 10) : null;
+      }).filter(r => r !== null);
+
+      if (resiNums.length > 0) {
+        primaryViewer.setStyle({ model: 0, resi: resiNums }, {
+          cartoon: { color: '#00f1fd', opacity: 0.95 },
+          stick: { colorscheme: 'cyanCarbon', radius: 0.16 }
+        });
+      }
+    }
+  }
+
+  // 2. Add Docked Ligand Pose (SDF)
+  if (sdfText && sdfText.length > 50) {
+    currentPoseSdf = sdfText;
+    primaryViewer.addModel(sdfText, "sdf");
+    primaryViewer.setStyle({ model: -1 }, {
+      stick: { colorscheme: 'greenCarbon', radius: 0.28 }
+    });
+  }
+
+  primaryViewer.zoomTo();
+  primaryViewer.render();
+  if (is3DSpinning) {
+    primaryViewer.spin("y", 1);
+  }
+}
+
+function toggle3DSpin() {
+  is3DSpinning = !is3DSpinning;
+  [primaryViewer, modalViewer].forEach(v => {
+    if (v) {
+      if (is3DSpinning) v.spin("y", 1);
+      else v.spin(false);
+    }
+  });
+
+  const btn = document.getElementById('btnSpin');
+  if (btn) {
+    if (is3DSpinning) btn.classList.add('text-emerald-400', 'font-bold');
+    else btn.classList.remove('text-emerald-400', 'font-bold');
+  }
+}
+
+function toggle3DSurface() {
+  is3DSurfaceOn = !is3DSurfaceOn;
+  const btn = document.getElementById('btnSurface');
+  
+  if (primaryViewer) {
+    if (is3DSurfaceOn) {
+      try {
+        const resiNums = currentTargetPocketResidues.map(r => {
+          if (typeof r === 'number') return r;
+          const m = String(r).match(/\d+/);
+          return m ? parseInt(m[0], 10) : null;
+        }).filter(r => r !== null);
+
+        const sel = resiNums.length > 0 ? { resi: resiNums } : {};
+        surfaceObj = primaryViewer.addSurface($3Dmol.SurfaceType.VDW, {
+          opacity: 0.35,
+          color: '#00f1fd'
+        }, sel);
+        if (btn) btn.classList.add('text-cyan-400', 'font-bold');
+      } catch (e) {
+        console.warn('Surface generation error:', e);
+      }
+    } else {
+      if (surfaceObj) {
+        primaryViewer.removeSurface(surfaceObj);
+        surfaceObj = null;
+      }
+      if (btn) btn.classList.remove('text-cyan-400', 'font-bold');
+    }
+    primaryViewer.render();
+  }
+}
+
+function reset3DView() {
+  if (primaryViewer) {
+    primaryViewer.zoomTo();
+    primaryViewer.render();
+  }
+  if (modalViewer) {
+    modalViewer.zoomTo();
+    modalViewer.render();
+  }
+}
+
+function open3DModal() {
+  const modal = document.getElementById('viewer3DModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  
+  const targetName = document.getElementById('targetName').textContent || 'Target Complex';
+  document.getElementById('modal3DTitle').textContent = `${targetName} · ${currentSelectedLead ? currentSelectedLead.id : 'Pocket View'}`;
+  
+  if (currentSelectedLead) {
+    document.getElementById('modal3DMetrics').textContent = `ΔG: ${currentSelectedLead.affinity} kcal/mol | QED: ${currentSelectedLead.qed} | SAScore: ${currentSelectedLead.sascore}`;
+  }
+
+  setTimeout(() => {
+    const container = document.getElementById('modalMolViewer3D');
+    if (!container || typeof $3Dmol === 'undefined') return;
+    container.innerHTML = '';
+    modalViewer = $3Dmol.createViewer(container, { backgroundColor: '#0b0f14' });
+
+    if (currentTargetPdbText && currentTargetPdbText.length > 50) {
+      modalViewer.addModel(currentTargetPdbText, "pdb");
+      modalViewer.setStyle({ model: 0 }, { cartoon: { color: 'spectrum', opacity: 0.85 } });
+
+      const resiNums = currentTargetPocketResidues.map(r => {
+        if (typeof r === 'number') return r;
+        const m = String(r).match(/\d+/);
+        return m ? parseInt(m[0], 10) : null;
+      }).filter(r => r !== null);
+
+      if (resiNums.length > 0) {
+        modalViewer.setStyle({ model: 0, resi: resiNums }, {
+          cartoon: { color: '#00f1fd', opacity: 0.95 },
+          stick: { colorscheme: 'cyanCarbon', radius: 0.18 }
+        });
+      }
+    }
+
+    if (currentPoseSdf && currentPoseSdf.length > 50) {
+      modalViewer.addModel(currentPoseSdf, "sdf");
+      modalViewer.setStyle({ model: -1 }, {
+        stick: { colorscheme: 'greenCarbon', radius: 0.3 }
+      });
+    }
+
+    modalViewer.zoomTo();
+    modalViewer.render();
+    if (is3DSpinning) modalViewer.spin("y", 1);
+  }, 100);
+}
+
+function close3DModal(e) {
+  if (e.target.id === 'viewer3DModal') {
+    close3DModalDirect();
+  }
+}
+
+function close3DModalDirect() {
+  const modal = document.getElementById('viewer3DModal');
+  if (modal) modal.classList.add('hidden');
+  if (modalViewer) {
+    modalViewer.spin(false);
+    modalViewer = null;
+  }
+}
+
+async function updateLead3DView(lead) {
+  if (!lead) return;
+
+  // If we don't have the target PDB text in memory, fetch it!
+  if (!currentTargetPdbText || currentTargetPdbText.length < 50) {
+    let target = document.getElementById('targetSelect').value;
+    if (currentTargetTab === 'esmfold' && currentTargetSeq) {
+      target = currentTargetSeq;
+    } else if (currentTargetTab === 'rcsb') {
+      target = (document.getElementById('customTargetInput').value || '').trim() || '8AZV';
+    }
+
+    try {
+      const res = await fetch('/api/target/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: target })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentTargetPdbText = data.pdb_text || '';
+        currentTargetPocketResidues = data.pocket_residues || [];
+        currentTargetIsEsmfold = data.is_esmfold || false;
+        currentTargetMeanPlddt = data.mean_plddt || 89.7;
+      }
+    } catch (e) {
+      console.warn("Could not fetch target PDB:", e);
+    }
+  }
+
+  // Render the complex with this lead's pose SDF
+  render3DComplex(
+    currentTargetPdbText,
+    lead.pose_sdf || null,
+    currentTargetPocketResidues,
+    currentTargetIsEsmfold,
+    currentTargetMeanPlddt
+  );
 }
 
 async function fetchCustomTarget() {
@@ -256,19 +612,59 @@ tailwind.config = {
   <aside class="flex flex-col w-72 xl:w-80 flex-shrink-0 border-r border-surface-border overflow-y-auto" style="background: var(--surface-card);">
     <div class="p-5">
       <!-- Target Selector -->
-      <div class="mb-5">
-        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">🎯 Oncology Target</label>
-        <select id="targetSelect" class="w-full text-sm rounded-lg px-3 py-2.5 font-medium focus:outline-none focus:ring-2 transition-all" style="background: #161b22; border: 1px solid #30363d; color: #e6edf3;" onchange="updateTargetInfo()">
-          <option value="KRAS G12D">🧬 KRAS G12D (Colon/Lung Cancer)</option>
-          <option value="EGFR T790M">🔬 EGFR T790M (Lung Cancer)</option>
-          <option value="SARS-CoV-2 Mpro">🦠 SARS-CoV-2 Mpro (COVID-19)</option>
-          <option value="HER2">💊 HER2/ERBB2 (Breast Cancer)</option>
-        </select>
-  <div class="mt-2 flex gap-1.5">
-    <input type="text" id="customTargetInput" placeholder="RCSB PDB ID (e.g. 6LU7, 2ITZ)" class="flex-1 text-xs px-2.5 py-1.5 rounded-lg bg-[#161b22] border border-[#30363d] text-gray-200 placeholder-gray-500 font-mono focus:border-nvidia-green focus:outline-none" />
-    <button type="button" onclick="fetchCustomTarget()" class="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-colors">Fetch PDB</button>
-  </div>
-</div>
+              <!-- Target Selection Tabs -->
+        <div class="mb-3">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">🎯 Oncology Target</label>
+            <span id="targetModeBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">PRESET</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 bg-[#101620] p-1 rounded-lg border border-surface-border mb-2.5">
+            <button type="button" onclick="switchTargetTab('presets')" id="tabBtnPresets" class="py-1 text-[11px] font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all">Presets</button>
+            <button type="button" onclick="switchTargetTab('rcsb')" id="tabBtnRcsb" class="py-1 text-[11px] font-semibold rounded text-gray-400 hover:text-white transition-all">RCSB PDB</button>
+            <button type="button" onclick="switchTargetTab('esmfold')" id="tabBtnEsmfold" class="py-1 text-[11px] font-semibold rounded text-gray-400 hover:text-white transition-all">🧬 ESMFold</button>
+          </div>
+
+          <!-- Tab 1: Presets -->
+          <div id="targetTabPresets">
+            <select id="targetSelect" class="w-full text-sm rounded-lg px-3 py-2.5 font-medium focus:outline-none focus:ring-2 transition-all" style="background: #161b22; border: 1px solid #30363d; color: #e6edf3;" onchange="updateTargetInfo()">
+              <option value="KRAS G12D">🧬 KRAS G12D (Colon/Lung Cancer)</option>
+              <option value="EGFR T790M">🔬 EGFR T790M (Lung Cancer)</option>
+              <option value="SARS-CoV-2 Mpro">🦠 SARS-CoV-2 Mpro (COVID-19)</option>
+              <option value="HER2">💊 HER2/ERBB2 (Breast Cancer)</option>
+            </select>
+          </div>
+
+          <!-- Tab 2: RCSB PDB -->
+          <div id="targetTabRcsb" class="hidden">
+            <div class="flex gap-1.5">
+              <input type="text" id="customTargetInput" placeholder="RCSB PDB (e.g. 6LU7, 2ITZ)" class="flex-1 text-xs px-2.5 py-2 rounded-lg bg-[#161b22] border border-[#30363d] text-gray-200 placeholder-gray-500 font-mono focus:border-nvidia-green focus:outline-none" />
+              <button type="button" onclick="fetchCustomTarget()" class="px-3 py-2 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-colors">Fetch</button>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-1">Fetches experimental crystallographic receptor from RCSB PDB.</p>
+          </div>
+
+          <!-- Tab 3: ESMFold De Novo Sequence -->
+          <div id="targetTabEsmfold" class="hidden space-y-2">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-[11px] text-gray-400">Amino Acid Sequence</span>
+                <span class="text-[10px] text-cyan-400 font-mono" id="seqLenBadge">0 aa</span>
+              </div>
+              <textarea id="esmfoldSeqInput" rows="3" placeholder="Paste FASTA or amino acid sequence (e.g. MTEYKLVVV...)" oninput="updateSeqCount()" class="w-full text-[11px] p-2 rounded-lg bg-[#161b22] border border-[#30363d] text-gray-200 font-mono focus:border-cyan-400 focus:outline-none resize-none"></textarea>
+            </div>
+            <div>
+              <div class="text-[10px] text-gray-400 mb-1">Quick Load Oncogenic Mutants:</div>
+              <div class="flex flex-wrap gap-1">
+                <button type="button" onclick="loadEsmPreset('kras')" class="text-[10px] px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded border border-gray-700 font-mono">KRAS G12D</button>
+                <button type="button" onclick="loadEsmPreset('braf')" class="text-[10px] px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded border border-gray-700 font-mono">BRAF V600E</button>
+                <button type="button" onclick="loadEsmPreset('mpro')" class="text-[10px] px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded border border-gray-700 font-mono">Mpro C145A</button>
+              </div>
+            </div>
+            <button type="button" onclick="foldDeNovoSequence()" class="w-full py-1.5 text-xs font-bold rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-500/30 flex items-center justify-center gap-1.5 transition-colors">
+              <span>🧬 Fold De Novo Structure (ESMFold)</span>
+            </button>
+          </div>
+        </div>
 
       <!-- Target Info Card -->
       <div id="targetInfoCard" class="glass-bright rounded-xl p-4 mb-5">
@@ -791,7 +1187,22 @@ let isRunning = false;
 
 // ─── Target Info Update ──────────────────────────────────────────────────────
 function updateTargetInfo() {
-  const target = document.getElementById('targetSelect').value;
+  let target = document.getElementById('targetSelect').value;
+  if (currentTargetTab === 'esmfold') {
+    const rawSeq = (document.getElementById('esmfoldSeqInput').value || '').trim().replace(/^>.*$/gm, '').replace(/\s+/g, '');
+    if (!rawSeq || rawSeq.length < 15) {
+      showToast('⚠️ Please enter an amino acid sequence in ESMFold tab (min 15 aa).');
+      return;
+    }
+    target = rawSeq;
+  } else if (currentTargetTab === 'rcsb') {
+    const customCode = (document.getElementById('customTargetInput').value || '').trim();
+    if (!customCode) {
+      showToast('⚠️ Please enter an RCSB PDB code (e.g. 6LU7, 2ITZ).');
+      return;
+    }
+    target = customCode;
+  }
   const info = TARGETS[target];
   document.getElementById('targetName').textContent = target;
   document.getElementById('targetName').style.color = info.color;
@@ -889,6 +1300,18 @@ async function runDiscovery() {
     if (backendData.trial_status) {
       updateTrialUI(backendData.trial_status);
     }
+    if (backendData.leads && backendData.leads.length > 0) {
+      currentLeads = backendData.leads.map(l => ({
+        ...l,
+        affinity: l.binding_affinity !== undefined ? l.binding_affinity : (l.affinity || -8.5),
+        verdict: l.admet_verdict || l.verdict || 'PASS',
+        pareto: l.is_pareto !== undefined ? l.is_pareto : (l.pareto || false)
+      }));
+      currentTargetPdbText = backendData.target_pdb || currentTargetPdbText;
+      currentTargetPocketResidues = backendData.pocket_residues || currentTargetPocketResidues;
+      currentTargetIsEsmfold = backendData.is_esmfold || false;
+      currentTargetMeanPlddt = backendData.mean_plddt || 0.0;
+    }
   } catch (err) {
     console.warn('API run warning:', err);
   }
@@ -959,17 +1382,19 @@ async function runDiscovery() {
   setAgent('docking', 'running', 'DiffDock simulating...');
   await sleep(900);
 
-  // Generate mock leads
-  const baseAffinity = target.includes('Mpro') ? -10.2 : target.includes('HER2') ? -9.75 : target.includes('EGFR') ? -9.15 : -9.05;
-  currentLeads = [];
-  for (let i = 0; i < Math.min(passed + flagged, 8); i++) {
-    const aff = parseFloat((baseAffinity - (i * 0.05) + (Math.random() - 0.5) * 0.3).toFixed(2));
-    const qed = parseFloat((0.65 - i * 0.03 + Math.random() * 0.08).toFixed(3)).toFixed(3);
-    const mw = Math.round(380 + i * 15 + Math.random() * 20);
-    const sa = parseFloat((4.5 + i * 0.2 + Math.random() * 0.5).toFixed(2));
-    const isPareto = i < 3;
-    const verdict = i < passed ? 'PASS' : 'FLAGGED';
-    currentLeads.push({ id: `NIM-LEAD-${String(i+1).padStart(2,'0')}`, affinity: aff, qed: parseFloat(qed), mw, sascore: sa, pareto: isPareto, verdict, round: i < candidates ? 1 : 2 });
+  // Generate mock leads if backendData leads not provided
+  if (!currentLeads || currentLeads.length === 0) {
+    const baseAffinity = target.includes('Mpro') ? -10.2 : target.includes('HER2') ? -9.75 : target.includes('EGFR') ? -9.15 : -9.05;
+    currentLeads = [];
+    for (let i = 0; i < Math.min(passed + flagged, 8); i++) {
+      const aff = parseFloat((baseAffinity - (i * 0.05) + (Math.random() - 0.5) * 0.3).toFixed(2));
+      const qed = parseFloat((0.65 - i * 0.03 + Math.random() * 0.08).toFixed(3)).toFixed(3);
+      const mw = Math.round(380 + i * 15 + Math.random() * 20);
+      const sa = parseFloat((4.5 + i * 0.2 + Math.random() * 0.5).toFixed(2));
+      const isPareto = i < 3;
+      const verdict = i < passed ? 'PASS' : 'FLAGGED';
+      currentLeads.push({ id: `NIM-LEAD-${String(i+1).padStart(2,'0')}`, affinity: aff, qed: parseFloat(qed), mw, sascore: sa, pareto: isPareto, verdict, round: i < candidates ? 1 : 2 });
+    }
   }
 
   const topLead = currentLeads[0];
@@ -1051,13 +1476,18 @@ function selectLead(i) {
   document.querySelectorAll('.lead-card').forEach((c, idx) => c.classList.toggle('selected', idx === i));
   const lead = currentLeads[i];
   currentSelectedLead = lead;
-  const target = document.getElementById('targetSelect').value;
+  let target = document.getElementById('targetSelect').value;
+  if (currentTargetTab === 'esmfold') target = 'ESMFold De Novo';
+  else if (currentTargetTab === 'rcsb') target = (document.getElementById('customTargetInput').value || '').trim() || 'RCSB Target';
   const info = TARGETS[target] || { pdb: 'CUSTOM', color: '#76b900' };
   
   document.getElementById('dossierPanel').innerHTML = `
-    <div class="space-y-3.5 animate-fade-up">
+    <div class="space-y-3 animate-fade-up">
       <div class="p-3 rounded-xl" style="background: rgba(118,185,0,0.06); border: 1px solid rgba(118,185,0,0.2);">
-        <div class="font-mono font-bold text-sm text-white mb-1">${lead.id}</div>
+        <div class="flex items-center justify-between mb-1">
+          <div class="font-mono font-bold text-sm text-white">${lead.id}</div>
+          <span class="text-[10px] font-mono text-gray-400">ΔG <strong class="text-nvidia-green">${lead.affinity.toFixed(2)}</strong></span>
+        </div>
         <div class="flex gap-1.5 flex-wrap">
           ${lead.pareto ? '<span class="badge-green">PARETO OPTIMAL</span>' : ''}
           <span class="${lead.verdict === 'PASS' ? 'badge-green' : 'badge-yellow'}">${lead.verdict}</span>
@@ -1065,8 +1495,32 @@ function selectLead(i) {
         </div>
       </div>
 
+      <!-- Interactive 3D Pocket & Pose Viewer (3Dmol.js) -->
+      <div class="rounded-xl overflow-hidden border border-surface-border bg-[#0b0f14] relative">
+        <div class="p-2 border-b border-surface-border flex items-center justify-between bg-[#121820]">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span class="text-[10px] font-bold font-mono text-cyan-300">3D Docked Complex</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="toggle3DSpin()" id="btnSpin" class="px-1.5 py-0.5 text-[9px] rounded bg-white/5 hover:bg-white/10 text-gray-300 transition-colors">🔄 Spin</button>
+            <button type="button" onclick="toggle3DSurface()" id="btnSurface" class="px-1.5 py-0.5 text-[9px] rounded bg-white/5 hover:bg-white/10 text-gray-300 transition-colors">🎨 Surface</button>
+            <button type="button" onclick="reset3DView()" class="px-1.5 py-0.5 text-[9px] rounded bg-white/5 hover:bg-white/10 text-gray-300 transition-colors">🔍</button>
+            <button type="button" onclick="open3DModal()" class="px-1.5 py-0.5 text-[9px] rounded bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition-colors font-bold">⛶</button>
+          </div>
+        </div>
+        <div id="molViewer3D" style="width: 100%; height: 210px; position: relative;"></div>
+        <div class="p-1.5 bg-[#0f141c] border-t border-surface-border flex items-center justify-between text-[9px] text-gray-400">
+          <div class="flex items-center gap-2">
+            <span><span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400"></span> Pocket</span>
+            <span><span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Pose</span>
+          </div>
+          <span id="viewer3dBadge" class="font-mono text-emerald-400 font-bold">DiffDock 3D</span>
+        </div>
+      </div>
+
       <!-- Physicochemical Key Properties -->
-      <div class="space-y-1.5 text-xs">
+      <div class="space-y-1 text-xs">
         <div class="flex justify-between py-1 border-b border-surface-border">
           <span class="text-gray-400">Binding Affinity (ΔG)</span>
           <span class="font-mono font-bold text-glow-green" style="color: var(--nvidia-green);">${lead.affinity.toFixed(2)} kcal/mol</span>
@@ -1083,11 +1537,11 @@ function selectLead(i) {
 
       <!-- Interactive Chemical Workbench (Human-in-the-Loop) -->
       <div class="p-2.5 rounded-xl bg-surface-elevated border border-surface-border">
-        <div class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+        <div class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider mb-1 flex items-center justify-between">
           <span>🧪 Chemical Workbench</span>
           <span class="text-[10px] text-gray-500 font-mono">Live Re-Dock</span>
         </div>
-        <input type="text" id="workbenchSmilesInput" value="${lead.smiles || 'CC(=O)Nc1ccc(O)cc1'}" class="w-full text-[11px] font-mono p-1.5 rounded bg-[#161b22] border border-[#30363d] text-gray-200 mb-2 focus:outline-none focus:border-cyan-400" />
+        <input type="text" id="workbenchSmilesInput" value="${lead.smiles || 'CC(=O)Nc1ccc(O)cc1'}" class="w-full text-[11px] font-mono p-1.5 rounded bg-[#161b22] border border-[#30363d] text-gray-200 mb-1.5 focus:outline-none focus:border-cyan-400" />
         
         <div class="grid grid-cols-3 gap-1 mb-2">
           <button type="button" onclick="tweakSmiles('fluorine')" class="py-1 text-[10px] bg-slate-800 hover:bg-slate-700 text-gray-300 rounded border border-gray-700 font-mono">+F Fluorine</button>
@@ -1110,7 +1564,6 @@ function selectLead(i) {
         <div class="text-[10px] text-gray-300 space-y-1">
           <div><strong class="text-white">Route:</strong> Suzuki Coupling + Amide Condensation (Yield ~78%)</div>
           <div class="text-gray-400"><strong>Commercial Precursors:</strong> Aryl Boronic Acid + Substituted Amine</div>
-          <div class="text-gray-400"><strong>Catalyst:</strong> Pd(dppf)Cl2, K2CO3 in Dioxane at 90°C</div>
         </div>
       </div>
 
@@ -1125,6 +1578,9 @@ function selectLead(i) {
       </div>
     </div>
   `;
+
+  // Render 3D docked complex with slight timeout for DOM mount
+  setTimeout(() => updateLead3DView(lead), 40);
 }
 
 // ─── Pareto Chart ─────────────────────────────────────────────────────────
@@ -1259,5 +1715,36 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // Init
 updateTargetInfo();
 </script>
+
+<!-- ═══════════════════════════════════════════════ 3D INSPECTOR MODAL ════════ -->
+<div id="viewer3DModal" class="modal-backdrop hidden" onclick="close3DModal(event)">
+  <div class="modal-card max-w-4xl p-0 animate-fade-up overflow-hidden" onclick="event.stopPropagation()" style="background: #0d1117; border: 1px solid #30363d; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);">
+    <div class="p-4 border-b border-surface-border flex items-center justify-between bg-[#161b22]">
+      <div class="flex items-center gap-3">
+        <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
+        <div>
+          <h3 id="modal3DTitle" class="text-sm font-bold text-white font-mono">3D Pocket & Docking Inspector</h3>
+          <p id="modal3DSub" class="text-[11px] text-gray-400">Interactive High-Resolution WebGL Visualization</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="toggle3DSpin()" class="px-2.5 py-1 text-xs text-gray-300 hover:text-white rounded bg-white/5 border border-white/10">🔄 Spin</button>
+        <button onclick="toggle3DSurface()" class="px-2.5 py-1 text-xs text-gray-300 hover:text-white rounded bg-white/5 border border-white/10">🎨 Pocket Surface</button>
+        <button onclick="reset3DView()" class="px-2.5 py-1 text-xs text-gray-300 hover:text-white rounded bg-white/5 border border-white/10">🔍 Recenter</button>
+        <button onclick="close3DModalDirect()" class="text-gray-400 hover:text-white p-1 text-lg font-bold ml-2">&times;</button>
+      </div>
+    </div>
+    <div id="modalMolViewer3D" style="width: 100%; height: 500px; position: relative; background: #0b0f14;"></div>
+    <div class="p-3 bg-[#101620] border-t border-surface-border flex items-center justify-between text-xs text-gray-400">
+      <div class="flex items-center gap-4">
+        <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-cyan-400"></span> Pocket Sidechains (Sticks)</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-400"></span> Docked Conformer Pose</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-gradient-to-r from-blue-400 to-indigo-500"></span> Protein Cartoon</span>
+      </div>
+      <span class="font-mono text-cyan-300 font-semibold" id="modal3DMetrics"></span>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

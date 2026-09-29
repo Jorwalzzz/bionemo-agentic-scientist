@@ -18,6 +18,9 @@ class TargetProfile:
     reference_ligand_name: str          # "MRTX1133"
     reference_ligand_smiles: str        # Parent chemical scaffold
     target_pocket_coords: Dict[str, float] = field(default_factory=lambda: {"x": 12.4, "y": -4.2, "z": 18.9})
+    pdb_text: str = ""                  # Full PDB coordinate string for 3D visualization
+    is_esmfold: bool = False            # True if folded de novo via NVIDIA NIM ESMFold
+    mean_plddt: float = 0.0             # Per-residue confidence metric (0-100%)
 
 @dataclass
 class MoleculeCandidate:

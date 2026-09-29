@@ -44,7 +44,7 @@ class AgenticScientistOrchestrator:
             self.bus.add_global_listener(self.on_council)
 
         # Autonomous Sub-Agents with Personas
-        self.target_scout = TargetScoutAgent(name="TargetScout")
+        self.target_scout = TargetScoutAgent(api_key=self.api_key, mock=self.mock, name="TargetScout")
         self.generative_chemist = GenerativeChemistAgent(api_key=self.api_key, mock=self.mock, name="GenerativeChemist")
         self.admet_critic = ADMETCriticAgent()
         self.docking_agent = BiophysicsDockingAgent(api_key=self.api_key, mock=self.mock, name="DiffDockDocking")
