@@ -14,27 +14,43 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Install System Dependencies (libGL & Cairo for RDKit / Matplotlib)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libxrender1 libxext6
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install Dependencies
+      - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Pytest Test Suite
+      - name: Prepare Working Directories
         run: |
-          pytest -v
+          mkdir -p results data/pdbs
+
+      - name: Run Pytest Test Suite
+        env:
+          PYTHONPATH: .
+          TRANSFORMERS_OFFLINE: "0"
+          HF_HUB_DISABLE_SYMLINKS_WARNING: "1"
+        run: |
+          pytest -v tests/test_extreme_stress.py tests/test_jaw_dropping_features.py tests/test_pipeline.py tests/test_esmfold_and_3d.py tests/test_benchmark_widget.py tests/test_mcp_server.py
 
       - name: Execute End-to-End Mock Benchmark & Chart Generation
+        env:
+          PYTHONPATH: .
         run: |
           python run_benchmark.py --mock --save-plots --iterations 1
 
       - name: Verify Generated Artifacts
         run: |
+          ls -la results/
           test -f results/benchmark_summary.csv
           test -f results/throughput_comparison.png
           test -f results/latency_vs_length.png
