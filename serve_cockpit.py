@@ -418,9 +418,205 @@ async def api_redock(request: Request):
     return redock_result
 
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", "8000"))
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=False)
+@app.post("/api/dossier/pdf")
+async def api_generate_ind_pdf(request: Request):
+    """
+    Generate FDA IND Section 2 nonclinical pharmacology briefing dossier PDF.
+    Extracts campaign candidate selection data and compiles a publication-grade PDF.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    dossier_data = body.get("dossier", {})
+    benchmark_data = body.get("benchmark", {})
+
+    # If payload is empty, load latest from results or default
+    if not dossier_data:
+        dossier_data = {
+            "target": "KRAS G12D",
+            "pdb_id": "8AZV",
+            "nominated_lead": "LEAD-001",
+            "binding_affinity": -9.4,
+            "residue_count": 188,
+            "screened": 10,
+            "pareto_count": 3,
+            "leads": [
+                {
+                    "id": "LEAD-001",
+                    "smiles": "O=C(N1CCN(C2=NC=C(Cl)C3=C2C(C4=C(F)C=CC=C4F)=CC=C3)CC1)C5=C(N)N=C6C(F)=CC=CC6=C5",
+                    "mw": 482.3,
+                    "logp": 3.1,
+                    "qed": 0.78,
+                    "sascore": 2.7,
+                    "admet_verdict": "PASS"
+                }
+            ],
+            "retrosynthesis": {
+                "num_steps": 2,
+                "feasibility": "Commercially Accessible (1-2 steps)",
+                "steps": [
+                    {"step": 1, "reaction_type": "Amide Coupling (PyBOP/DIPEA)", "reagents": ["DIPEA", "DMF", "rt 2h"], "yield_pct": 84.0, "difficulty": "Routine (★☆☆)"},
+                    {"step": 2, "reaction_type": "Suzuki-Miyaura Cross-Coupling", "reagents": ["Pd(dppf)Cl2", "K2CO3", "80°C"], "yield_pct": 78.0, "difficulty": "Routine (★☆☆)"}
+                ]
+            }
+        }
+
+    from src.ind_dossier import generate_ind_pdf
+    pdf_bytes = generate_ind_pdf(dossier_data, benchmark_data)
+
+    target_clean = str(dossier_data.get("target", "Candidate")).replace(" ", "_")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=FDA_IND_Section2_Briefing_{target_clean}.pdf"
+        }
+    )
+
+
+@app.post("/api/robot/protocol")
+async def api_robot_protocol(request: Request):
+    """
+    Generate Opentrons OT-2 automated pipetting protocol (.py)
+    and wet-lab SOP Card (.md) from retrosynthesis plan.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    from src.robot_protocol import generate_ot2_protocol, generate_lab_card
+    from src.models import RetrosynthesisPlan, RetrosynthesisStep
+
+    lead_id = body.get("lead_id", "LEAD-001")
+    smiles = body.get("smiles", "CC(=O)N1CCNCC1")
+    retro_data = body.get("retrosynthesis", {})
+
+    steps_raw = retro_data.get("steps", [])
+    if not steps_raw:
+        # Default representative steps
+        steps = [
+            RetrosynthesisStep(
+                step_number=1,
+                reaction_type="Amide Coupling (PyBOP/DIPEA)",
+                reaction_smarts="",
+                reactants=[{"name": "Building Block A (Amine Scaffold)"}],
+                reagents=["DIPEA", "DMF", "rt 2h"],
+                product_smiles=smiles,
+                estimated_yield_pct=85.0,
+                difficulty="Routine (★☆☆)"
+            ),
+            RetrosynthesisStep(
+                step_number=2,
+                reaction_type="Suzuki-Miyaura Cross-Coupling",
+                reaction_smarts="",
+                reactants=[{"name": "Boronic Acid Intermediate"}],
+                reagents=["Pd(dppf)Cl2", "K2CO3", "80°C"],
+                product_smiles=smiles,
+                estimated_yield_pct=78.0,
+                difficulty="Routine (★☆☆)"
+            )
+        ]
+    else:
+        steps = [
+            RetrosynthesisStep(
+                step_number=s.get("step", idx + 1),
+                reaction_type=s.get("reaction_type", "Coupling Transformation"),
+                reaction_smarts="",
+                reactants=s.get("reactants", [{"name": f"Reactant {idx + 1}"}]),
+                reagents=s.get("reagents", ["Standard Reagents"]),
+                product_smiles=s.get("product_smiles", smiles),
+                estimated_yield_pct=float(s.get("yield_pct", 75.0)),
+                difficulty=s.get("difficulty", "Routine (★☆☆)")
+            )
+            for idx, s in enumerate(steps_raw)
+        ]
+
+    starting_materials = retro_data.get("starting_materials", [
+        "4-bromo-2-fluorobenzonitrile (CAS: 105942-08-3)",
+        "N-Boc-piperazine (CAS: 57260-71-6)"
+    ])
+
+    plan = RetrosynthesisPlan(
+        candidate_id=lead_id,
+        target_smiles=smiles,
+        num_steps=len(steps),
+        overall_feasibility=retro_data.get("feasibility", "Commercially Accessible (1-2 steps)"),
+        steps=steps,
+        starting_materials=starting_materials,
+        estimated_turnaround_days=7
+    )
+
+    ot2_py = generate_ot2_protocol(plan)
+    lab_card_md = generate_lab_card(plan, lead_id)
+
+    return JSONResponse({
+        "status": "success",
+        "candidate_id": lead_id,
+        "ot2_protocol_py": ot2_py,
+        "lab_card_md": lab_card_md,
+        "num_steps": len(steps),
+        "feasibility": plan.overall_feasibility,
+        "filename_py": f"ot2_protocol_{lead_id}.py",
+        "filename_md": f"wetlab_card_{lead_id}.md"
+    })
+
+
+@app.post("/api/resistance/evolve")
+async def api_resistance_evolve(request: Request):
+    """
+    Adaptive Resistance Escape Engine:
+    Detects mutation hotspots via ESM-2, simulates clinical resistance mutations,
+    and evolves an escape scaffold via NVIDIA MolMIM NIM.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    lead_smiles = body.get("smiles", "O=C(N1CCN(C2=NC=C(Cl)C3=C2C(C4=C(F)C=CC=C4F)=CC=C3)CC1)C5=C(N)N=C6C(F)=CC=CC6=C5")
+    lead_id = body.get("lead_id", "LEAD-001")
+    target_name = body.get("target", "KRAS G12D")
+    affinity = float(body.get("binding_affinity", -9.2))
+
+    from src.resistance_engine import ResistanceEscapeEngine
+    from src.models import MoleculeCandidate, TargetProfile
+    from src.target_scout import TargetScoutAgent
+
+    api_key = os.getenv("NVIDIA_API_KEY", "").strip()
+    mock = os.getenv("USE_MOCK", "false").lower() == "true" or not api_key
+
+    scout = TargetScoutAgent(api_key=api_key, mock=mock)
+    target_prof, _ = scout.scout_target(target_name)
+
+    lead_cand = MoleculeCandidate(
+        id=lead_id,
+        smiles=lead_smiles,
+        parent_smiles=lead_smiles,
+        binding_affinity=affinity
+    )
+
+    engine = ResistanceEscapeEngine(api_key=api_key, mock=mock)
+    scan = engine.scan_and_evolve(lead=lead_cand, target=target_prof)
+
+    return JSONResponse({
+        "status": "success",
+        "original_lead_id": scan.original_lead_id,
+        "original_affinity": scan.original_affinity,
+        "hotspot_residues": scan.hotspot_residues,
+        "mutation_simulated": scan.mutation_simulated,
+        "mutant_affinity": scan.mutant_affinity,
+        "resistance_detected": scan.resistance_detected,
+        "evolved_lead_id": scan.evolved_lead_id,
+        "evolved_smiles": scan.evolved_lead_smiles,
+        "evolved_affinity": scan.evolved_affinity,
+        "delta_recovery": scan.delta_recovery,
+        "nim_calls_made": scan.nim_calls_made,
+        "structural_mechanism": scan.structural_mechanism,
+        "verdict": "RESISTANCE BYPASSED" if scan.resistance_detected else "STABLE LEAD"
+    })
 
 
 @app.get("/api/benchmark/speedup")
@@ -506,3 +702,8 @@ def get_hardware_speedup_benchmark():
             }
         ]
     }
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=False)

@@ -1,11 +1,149 @@
 """
-Agentic BioNeMo - Macromolecular PDB Utilities
-PDB downloading, structure cleaning, and canonical 20 IUPAC amino acid validation.
+PDB Structure Retrieval, Sanitization, and Synthetic Backbone Utility.
+
+Provides automated fetching of experimental protein structures from RCSB PDB,
+strict atom record filtering for NVIDIA NIM DiffDock compatibility,
+and dynamic alpha-carbon (C-alpha) backbone synthesis from raw amino acid sequences.
 """
+
+from __future__ import annotations
+
 import os
 import re
+import logging
+from typing import Optional
 import requests
-from typing import Tuple, List
+
+logger = logging.getLogger(__name__)
+
+RCSB_PDB_DOWNLOAD_URL = "https://files.rcsb.org/download/{pdb_id}.pdb"
+
+
+def sanitize_pdb_atom_records(pdb_text: str) -> str:
+    """
+    Filters raw PDB text to retain only 'ATOM' records and appends 'END'.
+    Ensures input compatibility with molecular docking diffusion models like DiffDock.
+    """
+    if not pdb_text or not pdb_text.strip():
+        raise ValueError("PDB content cannot be empty.")
+
+    filtered_lines = [
+        line.strip()
+        for line in pdb_text.splitlines()
+        if line.startswith("ATOM")
+    ]
+
+    if not filtered_lines:
+        raise ValueError("No valid 'ATOM' records found in provided PDB data.")
+
+    filtered_lines.append("END")
+    return "\n".join(filtered_lines) + "\n"
+
+
+def fetch_rcsb_pdb(
+    pdb_id: str,
+    cache_dir: str = "data/pdbs",
+    timeout: float = 15.0,
+) -> str:
+    """
+    Retrieves experimental PDB coordinates from RCSB PDB.
+    Caches the filtered ATOM records locally to avoid redundant network I/O.
+
+    Args:
+        pdb_id: 4-character RCSB PDB identifier (e.g., '1UBQ', '1DLS').
+        cache_dir: Directory to save and look up cached PDB structures.
+        timeout: Network timeout in seconds.
+
+    Returns:
+        Sanitized PDB ATOM text string.
+    """
+    clean_id = pdb_id.strip().upper()
+    if not re.match(r"^[0-9A-Z]{4}$", clean_id):
+        raise ValueError(f"Invalid PDB ID format: '{clean_id}'. Expected 4-character alphanumeric code.")
+
+    os.makedirs(cache_dir, exist_ok=True)
+    cache_path = os.path.join(cache_dir, f"{clean_id}.pdb")
+
+    # Return cached version if already present on disk
+    if os.path.exists(cache_path):
+        logger.debug("Loading cached PDB structure from %s", cache_path)
+        with open(cache_path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    # Query RCSB PDB
+    download_url = RCSB_PDB_DOWNLOAD_URL.format(pdb_id=clean_id)
+    logger.info("Fetching PDB %s from RCSB (%s)...", clean_id, download_url)
+
+    try:
+        response = requests.get(download_url, timeout=timeout)
+        if response.status_code != 200:
+            raise RuntimeError(f"RCSB PDB returned status {response.status_code} for ID '{clean_id}'")
+
+        sanitized_pdb = sanitize_pdb_atom_records(response.text)
+
+        # Write to disk cache
+        with open(cache_path, "w", encoding="utf-8") as f:
+            f.write(sanitized_pdb)
+
+        logger.info("Successfully fetched and cached PDB %s (%s)", clean_id, cache_path)
+        return sanitized_pdb
+
+    except Exception as e:
+        logger.warning("Failed to fetch PDB %s from RCSB: %s", clean_id, str(e))
+        raise
+
+
+def generate_synthetic_backbone(sequence: str) -> str:
+    """
+    Synthesizes an idealized alpha-carbon (CA) chain backbone in standard PDB format
+    from an arbitrary amino acid sequence. Used as an autonomous fallback when experimental
+    crystallography coordinates are unavailable for a novel or de novo protein.
+
+    Args:
+        sequence: Validated amino acid sequence string.
+
+    Returns:
+        Standard PDB-formatted string with CA atom coordinates.
+    """
+    clean_seq = re.sub(r"\s+", "", sequence.strip()).upper()
+    if not clean_seq:
+        raise ValueError("Sequence cannot be empty for synthetic backbone generation.")
+
+    lines = [f"HEADER    SYNTHETIC BACKBONE GENERATED FOR BioNeMo NIM BENCHMARK"]
+    # 3.8 Angstroms between consecutive C-alpha atoms in an extended peptide chain
+    for i, aa in enumerate(clean_seq, start=1):
+        x = round((i - 1) * 3.8, 3)
+        y = 0.000
+        z = 0.000
+        # Standard PDB format: ATOM, atom_num, atom_name, res_name, chain, res_num, x, y, z, occ, b_factor, element
+        line = f"ATOM  {i:5d}  CA  {aa:3s} A{i:4d}    {x:8.3f}{y:8.3f}{z:8.3f}  1.00 20.00           C"
+        lines.append(line)
+
+    lines.append("END")
+    return "\n".join(lines) + "\n"
+
+
+def resolve_protein_structure(
+    pdb_id: Optional[str] = None,
+    sequence: Optional[str] = None,
+    cache_dir: str = "data/pdbs",
+) -> str:
+    """
+    Unified resolver: attempts local cache, then RCSB PDB fetch,
+    and seamlessly falls back to synthetic backbone generation.
+    """
+    if pdb_id:
+        try:
+            return fetch_rcsb_pdb(pdb_id, cache_dir=cache_dir)
+        except Exception as e:
+            logger.warning("PDB resolution failed for '%s': %s. Checking sequence fallback...", pdb_id, str(e))
+
+    if sequence:
+        logger.info("Generating synthetic backbone from amino acid sequence (%d residues)...", len(sequence))
+        return generate_synthetic_backbone(sequence)
+
+    raise ValueError("Neither a valid pdb_id nor sequence was provided to resolve protein structure.")
+
 
 CANONICAL_20_IUPAC = set("ACDEFGHIKLMNPQRSTVWY")
 
@@ -16,17 +154,19 @@ AA3_TO_1 = {
     "SER": "S", "THR": "T", "VAL": "V", "TRP": "W", "TYR": "Y"
 }
 
+
 def validate_sequence(sequence: str) -> Tuple[bool, List[str]]:
     """Validates sequence against the canonical 20 IUPAC residues."""
     invalid = [char for char in sequence.upper() if char not in CANONICAL_20_IUPAC]
     return (len(invalid) == 0, list(set(invalid)))
+
 
 def clean_pdb_structure(raw_pdb: str, keep_hetero: bool = False) -> str:
     """
     Cleans PDB file:
     - Retains ATOM records
     - Removes crystallographic water (HOH, WAT)
-    - Optionally removes non-ligand HETATM records
+    - Optionally retains non-ligand HETATM records
     """
     cleaned_lines = []
     for line in raw_pdb.splitlines():
@@ -39,6 +179,7 @@ def clean_pdb_structure(raw_pdb: str, keep_hetero: bool = False) -> str:
         elif line.startswith("TER") or line.startswith("END"):
             cleaned_lines.append(line)
     return "\n".join(cleaned_lines)
+
 
 def extract_sequence_from_pdb(pdb_content: str, chain_id: str = "A") -> str:
     """Extracts 1-letter canonical amino acid sequence from PDB ATOM lines."""
@@ -59,42 +200,9 @@ def extract_sequence_from_pdb(pdb_content: str, chain_id: str = "A") -> str:
                 one_letter = AA3_TO_1.get(res_name, "X")
                 seq_chars.append(one_letter)
                 
-    sequence = "".join(seq_chars)
-    return sequence
+    return "".join(seq_chars)
+
 
 def fetch_pdb_online_or_mock(pdb_id: str, cache_dir: str = "data/targets") -> str:
     """Fetches PDB from RCSB or returns cached clean structure."""
-    os.makedirs(cache_dir, exist_ok=True)
-    cache_path = os.path.join(cache_dir, f"{pdb_id.upper()}.pdb")
-    
-    if os.path.exists(cache_path):
-        with open(cache_path, "r", encoding="utf-8") as f:
-            return f.read()
-            
-    # RCSB REST download
-    url = f"https://files.rcsb.org/download/{pdb_id.upper()}.pdb"
-    try:
-        resp = requests.get(url, timeout=10)
-        if resp.status_code == 200:
-            with open(cache_path, "w", encoding="utf-8") as f:
-                f.write(resp.text)
-            return resp.text
-    except Exception:
-        pass
-        
-    # Fallback minimal synthetic backbone if offline
-    synthetic_pdb = f"""HEADER    SYNTHETIC TARGET PDB {pdb_id.upper()}
-ATOM      1  N   MET A   1      11.120  -3.450  14.210  1.00 20.00           N
-ATOM      2  CA  MET A   1      11.950  -2.280  14.530  1.00 20.00           C
-ATOM      3  C   MET A   1      13.410  -2.670  14.340  1.00 20.00           C
-ATOM      4  O   MET A   1      13.780  -3.840  14.480  1.00 20.00           O
-ATOM      5  N   GLY A   2      14.250  -1.680  14.020  1.00 18.00           N
-ATOM      6  CA  GLY A   2      15.680  -1.920  13.820  1.00 18.00           C
-ATOM      7  C   GLY A   2      16.420  -0.650  13.450  1.00 18.00           C
-ATOM      8  O   GLY A   2      16.030   0.450  13.840  1.00 18.00           O
-TER       9      GLY A   2
-END
-"""
-    with open(cache_path, "w", encoding="utf-8") as f:
-        f.write(synthetic_pdb)
-    return synthetic_pdb
+    return resolve_protein_structure(pdb_id=pdb_id, cache_dir=cache_dir)

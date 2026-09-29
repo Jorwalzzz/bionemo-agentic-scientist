@@ -114,3 +114,18 @@ class SafetyRadarScore:
     cns_bbb_permeability_pct: float     # 0-100 scale
     cardiac_herg_safety_pct: float      # 0-100 scale
     clinical_selectivity_pct: float     # 0-100 scale
+
+@dataclass
+class ResistanceScan:
+    original_lead_id: str
+    original_affinity: float          # kcal/mol
+    hotspot_residues: List[str]       # High-entropy positions e.g. ["Gly12", "Asp69"]
+    mutation_simulated: str           # e.g. "G12D -> G12C (Switch-II Escape)"
+    mutant_affinity: float            # Degraded affinity against mutant
+    resistance_detected: bool         # True if loss > 1.5 kcal/mol
+    evolved_lead_id: str              # Identifier for counter-designed molecule
+    evolved_lead_smiles: str          # MolMIM counter-design
+    evolved_affinity: float           # Recovered affinity
+    delta_recovery: float             # kcal/mol recovered
+    nim_calls_made: int               # Count of NIM invocations
+    structural_mechanism: str = ""    # Mechanistic rationale for resistance & escape
