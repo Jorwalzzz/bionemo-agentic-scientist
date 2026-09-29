@@ -597,8 +597,8 @@ tailwind.config = {
         <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
         Mock Mode Active
       </div>
-      <button onclick="startGuidedTour()" class="px-3 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 transition-all hover:scale-105" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: 1px solid rgba(236, 72, 153, 0.5); box-shadow: 0 0 15px rgba(236, 72, 153, 0.25);">
-        <span>✨ Auto-Play Guided Tour</span>
+      <button onclick="startInteractiveTour()" class="px-3 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 transition-all hover:scale-105" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: 1px solid rgba(236, 72, 153, 0.5); box-shadow: 0 0 15px rgba(236, 72, 153, 0.25);">
+        <span>🧭 10-Step Interactive Guide</span>
       </button>
       <button onclick="openResistanceModal()" class="px-3 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 transition-all hover:scale-105" style="background: linear-gradient(135deg, rgba(239,68,68,0.25), rgba(168,85,247,0.15)); border: 1px solid rgba(239,68,68,0.5);">
         <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
@@ -618,23 +618,67 @@ tailwind.config = {
   </div>
 </header>
 
-<!-- Floating Guided Tour HUD Banner -->
-<div id="tourBanner" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[2000] max-w-xl w-[92%] p-4 rounded-2xl border border-pink-500/50 bg-[#0d1117]/95 backdrop-blur-xl shadow-2xl flex items-center justify-between gap-4 animate-fade-up">
-  <div class="flex items-center gap-3">
-    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-pink-500/30">
-      ✨
-    </div>
-    <div>
-      <div class="flex items-center gap-2">
-        <span id="tourStepNum" class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30">Step 1/5</span>
-        <h4 id="tourStepTitle" class="text-xs font-bold text-white font-sans">Live Guided Auto-Tour Active</h4>
+<!-- Interactive 10-Step Guided Tour Card -->
+<div id="tourCardModal" class="hidden fixed bottom-6 right-6 z-[2500] max-w-xl w-[94%] md:w-[560px] p-5 rounded-2xl border border-purple-500/40 bg-[#0d1117]/95 backdrop-blur-2xl shadow-2xl animate-fade-up">
+  <!-- Tour Header -->
+  <div class="flex items-center justify-between pb-3 border-b border-surface-border mb-3">
+    <div class="flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-purple-500/30">
+        🧭
       </div>
-      <p id="tourStepDetail" class="text-[11px] text-gray-300 leading-snug mt-0.5 max-w-md">Calibrating host performance...</p>
+      <div>
+        <div class="flex items-center gap-2">
+          <span id="tourStepBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">Step 1 of 10</span>
+          <span id="tourTechBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Architecture</span>
+        </div>
+      </div>
+    </div>
+    <button onclick="closeInteractiveTour()" class="text-gray-500 hover:text-white text-lg leading-none p-1 transition-colors">✕</button>
+  </div>
+
+  <!-- Progress Bar (10 steps) -->
+  <div class="w-full bg-gray-800 rounded-full h-1.5 mb-3 overflow-hidden">
+    <div id="tourProgressBar" class="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-300" style="width: 10%;"></div>
+  </div>
+
+  <!-- Step Title -->
+  <h3 id="tourStepTitle" class="text-sm font-bold text-white mb-2.5 font-sans flex items-center gap-1.5">
+    1/10: Platform Overview — Autonomous AI Drug Discovery
+  </h3>
+
+  <!-- Explanations -->
+  <div class="space-y-2.5 text-xs text-gray-300 mb-4">
+    <!-- What it is -->
+    <div class="p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/20">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-purple-300 mb-1 flex items-center gap-1">
+        <span>📖</span> What This Is &amp; The Science
+      </div>
+      <p id="tourWhatIs" class="text-[11px] text-gray-300 leading-relaxed"></p>
+    </div>
+
+    <!-- What to do -->
+    <div class="p-2.5 rounded-xl bg-cyan-950/20 border border-cyan-500/20">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-1 flex items-center gap-1">
+        <span>🎯</span> What You Should Do
+      </div>
+      <p id="tourWhatToDo" class="text-[11px] text-gray-300 leading-relaxed"></p>
     </div>
   </div>
-  <button onclick="stopGuidedTour()" class="px-2.5 py-1.5 text-[11px] font-semibold text-gray-400 hover:text-white rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex-shrink-0">
-    Skip Tour ✕
-  </button>
+
+  <!-- Actions & Navigation -->
+  <div class="flex items-center justify-between pt-2 border-t border-surface-border">
+    <div class="flex items-center gap-2">
+      <button id="btnTourPrev" onclick="prevTourStep()" class="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white rounded-lg bg-white/5 border border-white/10 transition-colors">
+        ◀ Previous
+      </button>
+      <button id="btnTourAction" onclick="executeTourAction()" class="px-3 py-1.5 text-xs font-bold text-cyan-300 hover:text-white rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 transition-all flex items-center gap-1">
+        ⚡ Try This Step
+      </button>
+    </div>
+    <button id="btnTourNext" onclick="nextTourStep()" class="px-4 py-1.5 text-xs font-bold text-white rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 shadow-md shadow-purple-500/20 transition-all flex items-center gap-1">
+      <span>Next Step ➔</span>
+    </button>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════ MAIN GRID ════════════ -->
@@ -2082,93 +2126,209 @@ function copyEvolvedSmiles() {
   });
 }
 
-// ─── GUIDED AUTO-TOUR IMPLEMENTATION ────────────────────────────────────────
-let isTourRunning = false;
+// ─── 10-STEP INTERACTIVE GUIDED TOUR IMPLEMENTATION ─────────────────────────
+let currentTourStep = 0;
 
-async function startGuidedTour() {
-  if (isTourRunning) return;
-  isTourRunning = true;
-  
-  const banner = document.getElementById('tourBanner');
-  if (banner) banner.classList.remove('hidden');
-
-  const updateTour = (step, title, detail) => {
-    const s = document.getElementById('tourStepNum');
-    const t = document.getElementById('tourStepTitle');
-    const d = document.getElementById('tourStepDetail');
-    if (s) s.textContent = typeof step === 'number' ? `Step ${step}/5` : step;
-    if (t) t.textContent = title;
-    if (d) d.textContent = detail;
-  };
-
-  try {
-    // Step 1: Hardware Benchmark (H100 Speedup)
-    updateTour(1, 'Hardware Benchmark Calibration', 'Opening live comparison: Host Laptop CPU vs NVIDIA NIM H100 Tensor Cores (~50× speedup)...');
-    await openBenchmarkModal();
-    await sleep(3500);
-    closeBenchmarkModalDirect();
-
-    // Step 2: Trigger Autonomous Discovery Campaign
-    updateTour(2, 'Autonomous Multi-Agent Discovery Swarm', 'Launching 6-Agent Council: Target Scout, Generative Chemist, MedChem Critic, Biophysics Docker, Retrosynthesis Planner, PI Arbiter...');
-    const select = document.getElementById('targetSelect');
-    if (select) {
-      select.value = 'KRAS G12D';
-      updateTargetInfo();
+const TOUR_STEPS = [
+  {
+    step: 1,
+    title: '1/10: Platform Architecture & 3-Panel Discovery Studio',
+    techBadge: 'Enterprise Architecture',
+    whatIs: 'BioNeMo Autonomous Scientist is an end-to-end preclinical computational drug discovery platform powered by NVIDIA BioNeMo NIM microservices (ESM-2, ESMFold, MolMIM, DiffDock). The interface is organized into 3 high-throughput panels: Left (Target Ingestion & 6-Agent Council), Center (Interactive 3D Biophysical Complex & Chemical Workbench), and Right (Pareto Frontier, KPIs & Audit Log).',
+    whatToDo: 'Look across the 3 columns of your screen. Notice how target biology, 3D biophysics, and chemical telemetry synchronize in real time. Click "⚡ Try This Step" to highlight the primary operational zones, or click "Next Step ➔" to proceed.',
+    action: () => {
+      showToast('🧭 Highlighting 3-Panel Discovery Studio architecture.');
+      const aside = document.querySelector('aside');
+      if (aside) aside.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    runDiscovery();
-
-    // Wait until leads are populated
-    let checks = 0;
-    while ((!currentLeads || currentLeads.length === 0) && checks < 25 && isTourRunning) {
-      await sleep(500);
-      checks++;
+  },
+  {
+    step: 2,
+    title: '2/10: Live Hardware Acceleration Benchmark (NVIDIA H100 vs CPU)',
+    techBadge: 'NVIDIA NIM & H100',
+    whatIs: 'Biomolecular AI inference (ESM-2 attention weights, MolMIM generative walks, DiffDock SE(3) diffusion) requires massive compute. Standard laptop CPUs choke on these tasks. NVIDIA NIM on Tensor Core H100 GPUs delivers an overall 54.2× speedup, compressing hours of CPU simulation into sub-second inference.',
+    whatToDo: 'Click "⚡ Try This Step" (or click "⚡ H100 vs CPU Benchmark" in the top header). Inside the popup, click "⚡ Calibrate My Laptop CPU" to execute a live micro-benchmark measuring your host machine vs H100 Tensor Cores. Take your time to inspect the latency distribution, then close the modal and click "Next Step ➔".',
+    action: () => {
+      openBenchmarkModal();
     }
-    await sleep(2000);
-    if (!isTourRunning) return;
-
-    // Step 3: 3D Pocket & Docked Pose Inspection
-    updateTour(3, 'Interactive 3D Biophysical Docking', 'Inspecting top nominated Pareto lead complex in WebGL 3D viewer (3Dmol.js)...');
-    if (currentLeads && currentLeads.length > 0) {
-      selectLead(0);
+  },
+  {
+    step: 3,
+    title: '3/10: Target Ingestion & ESMFold De Novo Structure Generation',
+    techBadge: 'ESMFold & RCSB PDB',
+    whatIs: 'Every drug discovery campaign starts with a target disease protein. You can pick high-impact oncology targets (KRAS G12D, EGFR T790M, BRAF V600E), enter any 4-letter RCSB PDB code, or paste an uncharacterized amino acid sequence. For novel sequences lacking experimental X-ray/cryo-EM structures, NVIDIA ESMFold NIM predicts atomic 3D coordinates in seconds with per-residue pLDDT confidence scores.',
+    whatToDo: 'Look at the "Target Ingestion" card at the top of the Left Panel. Click the target dropdown to select a target. Click "⚡ Try This Step" to automatically select KRAS G12D (PDB: 4OBE) and observe how the pocket volume, druggability score (0.84), and UniProt accession update.',
+    action: () => {
+      const select = document.getElementById('targetSelect');
+      if (select) {
+        select.value = 'KRAS G12D';
+        updateTargetInfo();
+      }
+      const aside = document.querySelector('aside');
+      if (aside) aside.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast('🎯 Target set to KRAS G12D (PDB: 4OBE, Druggability: 0.84)');
+    }
+  },
+  {
+    step: 4,
+    title: '4/10: Autonomous 6-Agent Scientific Council & Swarm Run',
+    techBadge: 'Multi-Agent Consensus',
+    whatIs: 'Instead of an opaque single-model approach, BioNeMo deploys an autonomous 6-agent scientific council: Target Scout (binding pocket & druggability), Generative Chemist (MolMIM latent walks), MedChem Critic (Lipinski Rule-of-5 & PAINS filters), Biophysics Docker (DiffDock pose scoring), Retrosynthesis Planner (reaction routes), and PI Arbiter (multi-objective consensus).',
+    whatToDo: 'Click the green "🚀 Launch Autonomous Discovery" button in the Left Panel (or click "⚡ Try This Step"). Observe the 6 agents activate, stream telemetry, debate molecular trade-offs, and synthesize novel candidate leads.',
+    action: () => {
+      runDiscovery();
+      showToast('🚀 Autonomous 6-Agent Council launched!');
+    }
+  },
+  {
+    step: 5,
+    title: '5/10: Multi-Objective Pareto Frontier & Lead Nominee',
+    techBadge: 'Pareto Optimization',
+    whatIs: 'A tightly-binding drug is worthless if it is insoluble, toxic, or impossible to synthesize. The platform computes and plots candidates on a 2D Pareto Frontier (Binding Affinity vs Drug-likeness QED). Compounds on the outer frontier represent optimal trade-offs. The Principal Investigator Arbiter agent automatically ranks and nominates the top lead candidate.',
+    whatToDo: 'Scroll down the Right Panel to the "Multi-Objective Pareto Frontier" card. Click on different candidate rows in the ranked table to inspect their binding energy (ΔG), QED, SA score, and Lipinski status. Click "⚡ Try This Step" to select the top nominated lead candidate.',
+    action: () => {
+      if (currentLeads && currentLeads.length > 0) {
+        selectLead(0);
+        showToast(`🏆 Selected top nominated lead: ${currentLeads[0].id}`);
+      } else {
+        showToast('ℹ️ Launch the council in Step 4 first to generate candidate leads.');
+      }
+      const table = document.getElementById('leadsTable');
+      if (table) table.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  },
+  {
+    step: 6,
+    title: '6/10: Interactive 3D Structural Complex (3Dmol.js)',
+    techBadge: '3Dmol.js WebGL',
+    whatIs: 'Evaluating 3D binding interactions is crucial for medicinal chemistry. Powered by 3Dmol.js WebGL, the Center Panel renders the target protein cartoon backbone, key binding pocket sidechains (cyan sticks), and the docked ligand conformer (green sticks) with calculated pose confidence.',
+    whatToDo: 'Click and drag on the 3D viewer in the Center Panel to rotate the protein-ligand complex. Scroll your mouse wheel to zoom. Click "⚡ Try This Step" to open the high-resolution 3D Inspector Modal, where you can toggle protein pocket surface rendering and auto-rotation!',
+    action: () => {
+      open3DModal();
       toggle3DSpin();
+      showToast('🔬 3D Pocket & Docking Inspector opened with auto-rotation.');
     }
-    await sleep(3000);
-    if (!isTourRunning) return;
+  },
+  {
+    step: 7,
+    title: '7/10: Chemical Workbench — Human-in-the-Loop Re-Docking',
+    techBadge: 'RDKit & Bioisostere Design',
+    whatIs: 'AI augments expert human intuition. The Chemical Workbench empowers medicinal chemists to perform in silico modifications: edit SMILES structures, substitute bioisosteric functional groups (fluorine swaps, methyl caps), and trigger immediate DiffDock re-docking with instant Lipinski property calculations.',
+    whatToDo: 'Locate the Chemical Workbench right beneath the 3D viewer in the Center Panel. Try editing the SMILES input or clicking one of the bioisostere preset buttons. Click "⚡ Try This Step" to test an analog substitution and watch the real-time physicochemical radar update.',
+    action: () => {
+      const wb = document.getElementById('workbenchCard') || document.getElementById('workbenchSmilesInput');
+      if (wb) wb.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = document.getElementById('workbenchSmilesInput');
+      if (input && (!input.value || input.value.trim() === '')) {
+        input.value = 'COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1';
+      }
+      showToast('🧪 Chemical Workbench active: ready for bioisosteric edits & re-docking.');
+    }
+  },
+  {
+    step: 8,
+    title: '8/10: Adaptive Resistance Escape Engine',
+    techBadge: 'ESM-2 & MolMIM Counter-Design',
+    whatIs: 'Tumors frequently mutate to escape targeted therapies (e.g. KRAS G12D mutating to G12C or G12V). Our novel Adaptive Resistance Escape Engine uses ESM-2 zero-shot variant scoring to detect escape hotspots, and guides MolMIM generative latent walks to synthesize counter-measure scaffolds that overcome resistance before clinical trials begin.',
+    whatToDo: 'Click "⚡ Try This Step" (or click "🛡️ Resistance Engine" in the top header). In the modal, pick a mutation (e.g., G12D -> G12C) and click "Evolve Counter-Measure". Review the wild-type vs mutant docking affinity delta and click "Adopt Scaffold" to inject the evolved molecule directly into your workbench!',
+    action: () => {
+      openResistanceModal();
+      showToast('🛡️ Adaptive Resistance Escape Engine opened.');
+    }
+  },
+  {
+    step: 9,
+    title: '9/10: Retrosynthesis & Opentrons OT-2 Wet-Lab Robotics',
+    techBadge: 'Opentrons API & Automation',
+    whatIs: 'An in silico drug is only valuable if it can be synthesized in the wet lab. The Retrosynthesis Planner agent decomposes the molecule into commercial building blocks, predicts reaction feasibility, and automatically writes an executable Python script for Opentrons OT-2 liquid handling robots (API v2.15) alongside a Wet-Lab SOP Card with 96-well deck layouts and pipetting volumes.',
+    whatToDo: 'Click "⚡ Try This Step" (or click "🤖 Opentrons OT-2 Protocol" in the bottom action bar). Inspect the generated Python robotic code, copy it to your clipboard, and review the human-readable Wet-Lab SOP deck layout.',
+    action: () => {
+      generateRobotProtocol();
+      showToast('🤖 Opentrons OT-2 Robotics Protocol modal opened.');
+    }
+  },
+  {
+    step: 10,
+    title: '10/10: Automated FDA IND Section 2 Briefing Dossier (PDF)',
+    techBadge: 'ReportLab & 21 CFR 312',
+    whatIs: 'To transition from discovery to clinical trials, pharmaceutical teams must submit an Investigational New Drug (IND) application to the FDA. BioNeMo compiles all council decisions, ADMET profiles, binding kinetics, safety margins, and retrosynthesis pathways into an official FDA IND Section 2 Nonclinical Pharmacology Briefing Document rendered into a publication-grade multi-page PDF via ReportLab.',
+    whatToDo: 'Click "⚡ Try This Step" (or click "📄 Download FDA IND Briefing (PDF)" in the bottom action bar). Your browser will immediately download the complete regulatory dossier. You have completed the 10-step tour! You are now equipped to run custom campaigns, test sequences, or download deliverables.',
+    action: () => {
+      downloadIndPdf();
+      showToast('📄 Downloading official FDA IND Section 2 Briefing PDF...');
+    }
+  }
+];
 
-    // Step 4: Adaptive Resistance Stress-Test
-    updateTour(4, 'Adaptive Resistance Escape Engine', 'Stress-testing lead against clinical gatekeeper mutation (G12D->G12C) & auto-evolving MolMIM counter-design...');
-    await runResistanceStressTest();
-    await sleep(4000);
-    closeResistanceModal();
-    if (!isTourRunning) return;
+function startInteractiveTour() {
+  currentTourStep = 0;
+  const modal = document.getElementById('tourCardModal');
+  if (modal) modal.classList.remove('hidden');
+  renderTourStep(0);
+}
 
-    // Step 5: FDA IND Briefing & Opentrons Robotic Protocol
-    updateTour(5, 'FDA IND Dossier (PDF) & Robotic Synthesis', 'Ready to generate 21 CFR 312 FDA clinical briefing PDF and Opentrons OT-2 pipetting code...');
-    await generateRobotProtocol();
-    await sleep(3500);
-    closeRobotModal();
+function closeInteractiveTour() {
+  const modal = document.getElementById('tourCardModal');
+  if (modal) modal.classList.add('hidden');
+  showToast('Guided tour closed. Click "🧭 10-Step Interactive Guide" anytime to resume.');
+}
 
-    updateTour('✓', 'Tour Complete!', 'Platform demonstration completed. You are ready to explore or download deliverables!');
-    showToast('🎉 Guided Auto-Tour completed successfully!');
-    await sleep(3500);
-  } catch (err) {
-    console.warn('Tour interrupted:', err);
-  } finally {
-    isTourRunning = false;
-    if (banner) banner.classList.add('hidden');
+function renderTourStep(index) {
+  if (index < 0 || index >= TOUR_STEPS.length) return;
+  currentTourStep = index;
+  const step = TOUR_STEPS[index];
+
+  const badge = document.getElementById('tourStepBadge');
+  const techBadge = document.getElementById('tourTechBadge');
+  const progBar = document.getElementById('tourProgressBar');
+  const title = document.getElementById('tourStepTitle');
+  const whatIs = document.getElementById('tourWhatIs');
+  const whatToDo = document.getElementById('tourWhatToDo');
+  const btnPrev = document.getElementById('btnTourPrev');
+  const btnNext = document.getElementById('btnTourNext');
+
+  if (badge) badge.textContent = `Step ${step.step} of 10`;
+  if (techBadge) techBadge.textContent = step.techBadge;
+  if (progBar) progBar.style.width = `${((index + 1) / TOUR_STEPS.length) * 100}%`;
+  if (title) title.textContent = step.title;
+  if (whatIs) whatIs.textContent = step.whatIs;
+  if (whatToDo) whatToDo.textContent = step.whatToDo;
+
+  if (btnPrev) {
+    btnPrev.disabled = index === 0;
+    btnPrev.style.opacity = index === 0 ? '0.4' : '1.0';
+    btnPrev.style.cursor = index === 0 ? 'not-allowed' : 'pointer';
+  }
+
+  if (btnNext) {
+    if (index === TOUR_STEPS.length - 1) {
+      btnNext.innerHTML = '<span>Finish Tour 🎉</span>';
+    } else {
+      btnNext.innerHTML = '<span>Next Step ➔</span>';
+    }
   }
 }
 
-function stopGuidedTour() {
-  isTourRunning = false;
-  const banner = document.getElementById('tourBanner');
-  if (banner) banner.classList.add('hidden');
-  closeBenchmarkModalDirect();
-  closeResistanceModal();
-  closeRobotModal();
-  showToast('Tour stopped.');
+function nextTourStep() {
+  if (currentTourStep >= TOUR_STEPS.length - 1) {
+    closeInteractiveTour();
+    showToast('🎉 Tour completed! Enjoy using BioNeMo Autonomous Scientist.');
+    return;
+  }
+  renderTourStep(currentTourStep + 1);
 }
 
+function prevTourStep() {
+  if (currentTourStep <= 0) return;
+  renderTourStep(currentTourStep - 1);
+}
+
+function executeTourAction() {
+  const step = TOUR_STEPS[currentTourStep];
+  if (step && typeof step.action === 'function') {
+    step.action();
+  }
+}
 </script>
 
 <!-- ═══════════════════════════════════════════════ 3D INSPECTOR MODAL ════════ -->
