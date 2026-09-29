@@ -951,19 +951,25 @@ async function runDiscovery() {
   document.getElementById('streamDot').style.background = '#76b900';
   isRunning = false;
 
-  if (trialState.is_locked || trialState.runs_remaining === 0) {
+  if (trialState.is_creator) {
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('runBtn').onclick = runDiscovery;
+    document.getElementById('runBtn').style.background = 'linear-gradient(135deg, #76b900, #4a7a00)';
+    document.getElementById('runBtn').style.border = '';
+    document.getElementById('runLabel').textContent = '🚀 Run Agentic BioNeMo Swarm';
+  } else if (trialState.is_locked || trialState.runs_remaining === 0) {
     document.getElementById('runBtn').disabled = false;
     document.getElementById('runBtn').onclick = () => openInstallModal(true);
     document.getElementById('runBtn').style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(118, 185, 0, 0.15))';
     document.getElementById('runBtn').style.border = '1px solid rgba(239, 68, 68, 0.6)';
-    document.getElementById('runLabel').textContent = '🔒 Trial Limit Reached (1/1) — Get Full Local App';
+    document.getElementById('runLabel').textContent = '🔒 Free Trial Limit Reached (2/2 Used) — Get Full Local App';
     showToast('🎉 Free Trial Complete! Launch the Full Local App for unlimited discovery.');
     setTimeout(() => {
       openInstallModal(true);
     }, 1200);
   } else {
     document.getElementById('runBtn').disabled = false;
-    document.getElementById('runLabel').textContent = `🚀 Run Discovery (${trialState.runs_remaining} Free Trial Left)`;
+    document.getElementById('runLabel').textContent = `🚀 Run Discovery (${trialState.runs_remaining} Free Demo Runs Left)`;
   }
 }
 
