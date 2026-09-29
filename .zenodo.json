@@ -1,0 +1,34 @@
+{
+  "title": "Agentic BioNeMo: Autonomous Multi-Agent AI Scientist for Target-to-Lead Drug Discovery",
+  "description": "An autonomous multi-agent artificial intelligence discovery system orchestrating specialized AI agents to generate, filter, dock, and optimize clinical drug candidates against high-priority oncology and viral targets using NVIDIA BioNeMo NIM microservices (MolMIM, DiffDock, ESM-2), RDKit, and automated retrosynthesis.",
+  "creators": [
+    {
+      "name": "Jorwalzzz",
+      "affiliation": "Independent Computational Biology Researcher"
+    }
+  ],
+  "access_right": "open",
+  "license": "agpl-3.0-or-later",
+  "upload_type": "software",
+  "keywords": [
+    "artificial intelligence",
+    "drug discovery",
+    "nvidia bionemo",
+    "nvidia nim",
+    "diffdock",
+    "molmim",
+    "esm2",
+    "cheminformatics",
+    "rdkit",
+    "multi-agent systems",
+    "retrosynthesis",
+    "pareto frontier"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Jorwalzzz/bionemo-agentic-scientist",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

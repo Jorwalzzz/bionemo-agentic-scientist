@@ -15,7 +15,8 @@ pinned: false
 [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA-BioNeMo%20%7C%20NIM-76B900.svg)](https://build.nvidia.com)
 [![RDKit](https://img.shields.io/badge/RDKit-Cheminformatics-blueviolet.svg)](https://www.rdkit.org/)
 [![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](docker-compose.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.bionemo-agentic-scientist.svg)](https://zenodo.org)
 
 An autonomous multi-agent artificial intelligence discovery system orchestrating specialized AI sub-agents to ingest biological targets, generate bioisosteric small molecules, screen ADMET liabilities, simulate 3D receptor-ligand docking, and map wet-lab retrosynthesis routes.
 
@@ -138,6 +139,41 @@ python serve_cockpit.py
 Visit [http://localhost:8000](http://localhost:8000) for the full cockpit with unlimited creator access.
 
 ---
+
+
+---
+
+## 📜 Intellectual Property, Copyleft & Permanent Open-Access Protection
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
+
+### Why AGPLv3?
+- **Anti-Enclosure Guarantee**: Any enterprise, startup, or individual that incorporates, modifies, or serves this software over a network/cloud API **MUST release their complete source code publicly under AGPLv3 for free**.
+- **Permanent Open Source**: No company can take this software, close-source it, or rebrand it as a paid proprietary product.
+- **Mandatory Attribution**: All forks, deployments, and derivatives are legally obligated to preserve the original copyright notice and scientific attribution to **Jorwalzzz**.
+
+---
+
+## 📚 Citation & Academic Prior Art
+
+If you utilize Agentic BioNeMo or its autonomous multi-agent algorithms in your scientific research, drug discovery campaigns, or publications, please cite the software using the following formats:
+
+### BibTeX
+```bibtex
+@software{jorwalzzz2026agenticbionemo,
+  author       = {Jorwalzzz},
+  title        = {{Agentic BioNeMo: Autonomous Multi-Agent AI Scientist for Target-to-Lead Drug Discovery}},
+  month        = sep,
+  year         = 2026,
+  publisher    = {Zenodo / GitHub},
+  version      = {v2.2.0},
+  license      = {AGPL-3.0-or-later},
+  url          = {https://github.com/Jorwalzzz/bionemo-agentic-scientist}
+}
+```
+
+### APA Format
+> Jorwalzzz. (2026). *Agentic BioNeMo: Autonomous Multi-Agent AI Scientist for Target-to-Lead Drug Discovery* (Version 2.2.0) [Computer software]. Zenodo. https://github.com/Jorwalzzz/bionemo-agentic-scientist
 
 ## 📜 Acknowledgements & Attribution
 - **Architect & Lead Engineer**: [Jorwalzzz](https://github.com/Jorwalzzz)
