@@ -64,11 +64,19 @@ def fetch_rcsb_pdb(
     os.makedirs(cache_dir, exist_ok=True)
     cache_path = os.path.join(cache_dir, f"{clean_id}.pdb")
 
-    # Return cached version if already present on disk
-    if os.path.exists(cache_path):
-        logger.debug("Loading cached PDB structure from %s", cache_path)
-        with open(cache_path, "r", encoding="utf-8") as f:
-            return f.read()
+    # Check candidate local cache locations before attempting any network requests
+    candidate_paths = [
+        cache_path,
+        os.path.join("data", "pdbs", f"{clean_id}.pdb"),
+        os.path.join("data", "targets", f"{clean_id}.pdb"),
+        os.path.join(os.path.dirname(__file__), "..", "data", "pdbs", f"{clean_id}.pdb"),
+        os.path.join(os.path.dirname(__file__), "..", "data", "targets", f"{clean_id}.pdb"),
+    ]
+    for cp in candidate_paths:
+        if os.path.exists(cp):
+            logger.debug("Loading cached PDB structure from %s", cp)
+            with open(cp, "r", encoding="utf-8") as f:
+                return f.read()
 
     # Query RCSB PDB
     download_url = RCSB_PDB_DOWNLOAD_URL.format(pdb_id=clean_id)
