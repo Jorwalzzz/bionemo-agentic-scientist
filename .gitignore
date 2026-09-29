@@ -1,35 +1,33 @@
-# Python
+# Python & Virtual Environments
+.venv/
+env/
+venv/
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
+
+# Secrets & Environment
+.env
+.env.local
+*.trial_secret
+.trial_secret
+data/trial_ledger.json
+trial_ledger.json
+
+# Results & Artifacts
+results/*.png
+results/*.csv
+!results/.gitkeep
+
+# Pytest & Coverage
 .pytest_cache/
 .coverage
 htmlcov/
-
-# Virtual Environments
-.venv/
-env/
-venv/
-ENV/
-
-# Secrets & Local Configs
-.env
-*.pem
-*.key
-conversation_history/
 
 # IDE & OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-
-# Trial limiter secrets & ledger
-data/.trial_secret
-data/trial_ledger.json
-
-
-cloudflared.exe
-tunnel.log
-
