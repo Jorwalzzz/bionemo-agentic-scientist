@@ -22,5 +22,5 @@ COPY . .
 # Expose dynamic web port
 EXPOSE 8000
 
-# Run FastAPI server with proxy headers enabled for Cloudflare / Render edge
-CMD ["uvicorn", "serve_cockpit:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+# Run FastAPI server via python entrypoint to respect $PORT on Render / Cloud
+CMD ["python", "serve_cockpit.py"]
