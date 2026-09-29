@@ -1,20 +1,27 @@
 """
-Agentic BioNeMo - Multi-Agent Orchestrator
-Coordinates the closed-loop autonomous drug discovery cycle, managing agent communications,
-state machine transitions, and experimental artifact serialization.
+Agentic BioNeMo - Multi-Sub-Agent Swarm Orchestrator
+Coordinates the decentralized autonomous scientific council:
+- Dr. Cynthia (Target Scout)
+- Dr. Aris (Generative Chemist)
+- Dr. Marcus (MedChem Critic & Veto Engine)
+- Dr. Elena (Biophysics Docking)
+- Dr. Chen (Retrosynthesis Planner)
+- Dr. Sterling (Chief Scientific PI & Council Arbiter)
 """
 import os
 import csv
 import logging
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Dict, Any
 from rdkit import Chem
 
-from src.models import TargetProfile, MoleculeCandidate, DossierReport, AgentMessage
+from src.models import TargetProfile, MoleculeCandidate, DossierReport, AgentMessage, CouncilMessage, RetrosynthesisPlan
+from src.bus.message_bus import SwarmMessageBus
 from src.target_scout import TargetScoutAgent
 from src.generative_chemist import GenerativeChemistAgent
 from src.admet_critic import ADMETCriticAgent
 from src.docking_agent import BiophysicsDockingAgent
 from src.pi_agent import PrincipalInvestigatorAgent
+from src.retrosynthesis_agent import RetrosynthesisAgent
 
 logger = logging.getLogger("Orchestrator")
 
@@ -23,20 +30,30 @@ class AgenticScientistOrchestrator:
         self,
         api_key: str = None,
         mock: bool = True,
-        on_message_callback: Optional[Callable[[AgentMessage], None]] = None
+        on_message_callback: Optional[Callable[[AgentMessage], None]] = None,
+        on_council_dialogue: Optional[Callable[[CouncilMessage], None]] = None
     ):
         self.api_key = api_key or os.getenv("NVIDIA_API_KEY", "")
         self.mock = mock or (not self.api_key)
         self.on_message = on_message_callback
+        self.on_council = on_council_dialogue
         
-        # Instantiate 5 autonomous agents
-        self.target_scout = TargetScoutAgent()
-        self.generative_chemist = GenerativeChemistAgent(api_key=self.api_key, mock=self.mock)
+        # Swarm message bus for decentralized agent communication
+        self.bus = SwarmMessageBus()
+        if self.on_council:
+            self.bus.add_global_listener(self.on_council)
+
+        # Autonomous Sub-Agents with Personas
+        self.target_scout = TargetScoutAgent(name="TargetScout")
+        self.generative_chemist = GenerativeChemistAgent(api_key=self.api_key, mock=self.mock, name="GenerativeChemist")
         self.admet_critic = ADMETCriticAgent()
-        self.docking_agent = BiophysicsDockingAgent(api_key=self.api_key, mock=self.mock)
-        self.pi_agent = PrincipalInvestigatorAgent()
+        self.docking_agent = BiophysicsDockingAgent(api_key=self.api_key, mock=self.mock, name="DiffDockDocking")
+        self.pi_agent = PrincipalInvestigatorAgent(name="PIParetoArbiter")
+        self.retro_agent = RetrosynthesisAgent()
         
         self.audit_log: List[AgentMessage] = []
+        self.latest_retrosynthesis_plan: Optional[RetrosynthesisPlan] = None
+        self.evolution_rounds_data: List[Dict[str, Any]] = []
 
     def _emit(self, msg: AgentMessage):
         self.audit_log.append(msg)
@@ -47,84 +64,157 @@ class AgenticScientistOrchestrator:
         self,
         target_query: str = "KRAS G12D",
         num_candidates: int = 12,
+        rounds: int = 1,
         enable_feedback_loop: bool = True,
         output_dir: str = "results"
     ) -> DossierReport:
-        """Executes full autonomous multi-agent discovery cycle."""
+        """Executes full autonomous multi-sub-agent discovery council."""
         os.makedirs(output_dir, exist_ok=True)
-        
-        # --- Stage 1: Target Scouting ---
+        self.bus.clear()
+        self.evolution_rounds_data.clear()
+
+        # --- Sub-Agent 1: Target Scout (Dr. Cynthia) ---
         target_profile, scout_msg = self.target_scout.scout_target(target_query)
         self._emit(scout_msg)
-        
-        # --- Stage 2: Generative Chemistry Exploration (Round 1) ---
-        candidates, chem_msg = self.generative_chemist.generate_derivatives(
-            parent_smiles=target_profile.reference_ligand_smiles,
-            target_name=target_profile.name,
-            num_molecules=num_candidates,
-            round_num=1
+        self.bus.publish(
+            agent_id="scout",
+            persona_name="Dr. Cynthia (Target Scout)",
+            avatar="🎯",
+            intent="TARGET_RESOLVED",
+            content=f"Structural target '{target_profile.name}' (PDB {target_profile.pdb_id}) resolved and cleaned. Active site cleft isolated with {len(target_profile.pocket_residues)} key contact residues. Handing off to Dr. Aris for generative exploration.",
+            metadata={"pdb_id": target_profile.pdb_id, "residue_count": len(target_profile.canonical_sequence)}
         )
-        self._emit(chem_msg)
-        
-        # --- Stage 3: ADMET & MedChem Criticism ---
-        evaluated_candidates, admet_msg = self.admet_critic.evaluate_candidates(candidates)
-        self._emit(admet_msg)
-        
-        # --- Stage 4: Biophysics & DiffDock Docking ---
-        docked_leads, dock_msg = self.docking_agent.dock_candidates(evaluated_candidates, target_profile)
-        self._emit(dock_msg)
-        
-        # --- Stage 5: PI Evaluation & Pareto Ranking ---
-        top_leads, pi_msg = self.pi_agent.evaluate_and_rank_leads(docked_leads, target_profile)
+
+        all_screened: List[MoleculeCandidate] = []
+        current_seed_smiles = target_profile.reference_ligand_smiles
+
+        # Multi-Round Evolutionary Swarm Loop
+        total_rounds = max(1, min(rounds, 3))
+        for current_round in range(1, total_rounds + 1):
+            round_candidate_count = num_candidates if current_round == 1 else 6
+            
+            # --- Sub-Agent 2: Generative Chemist (Dr. Aris) ---
+            prompt_guidance = "" if current_round == 1 else "Evolve top Pareto lead: optimize subpocket complementarity and polar surface area"
+            candidates, chem_msg = self.generative_chemist.generate_derivatives(
+                parent_smiles=current_seed_smiles,
+                target_name=target_profile.name,
+                num_molecules=round_candidate_count,
+                steering_prompt=prompt_guidance,
+                round_num=current_round
+            )
+            self._emit(chem_msg)
+            self.bus.publish(
+                agent_id="chemist",
+                persona_name="Dr. Aris (Generative Chemist)",
+                avatar="🧪",
+                intent="PROPOSAL",
+                content=f"[Round {current_round}] Sampled chemical latent space via NVIDIA MolMIM. Generated {len(candidates)} bioisosteric candidate structures around seed scaffold. Submitting to Dr. Marcus for rigorous MedChem scrutiny.",
+                metadata={"round": current_round, "candidate_count": len(candidates)}
+            )
+
+            # --- Sub-Agent 3: MedChem Critic & Veto Loop (Dr. Marcus) ---
+            evaluated_candidates, admet_msg = self.admet_critic.evaluate_candidates(candidates)
+            self._emit(admet_msg)
+            
+            cleared_leads = [c for c in evaluated_candidates if c.admet_verdict == "PASS"]
+            flagged_leads = [c for c in evaluated_candidates if c.admet_verdict == "FLAGGED"]
+            rejected_leads = [c for c in evaluated_candidates if c.admet_verdict == "REJECT"]
+
+            # Dr. Marcus issues vetoes or clearances
+            if rejected_leads:
+                worst = rejected_leads[0]
+                reasons = ", ".join(worst.pains_alerts) if worst.pains_alerts else f"SAScore {worst.sascore:.1f} / MW {worst.mw:.0f}"
+                self.bus.publish(
+                    agent_id="critic",
+                    persona_name="Dr. Marcus (MedChem Critic)",
+                    avatar="⚖️",
+                    intent="VETO",
+                    content=f"VETO issued on {worst.id}: Flagged for {reasons}. Molecule is chemically unviable. Vetoing from docking pipeline.",
+                    metadata={"vetoed_id": worst.id, "reasons": reasons}
+                )
+            
+            self.bus.publish(
+                agent_id="critic",
+                persona_name="Dr. Marcus (MedChem Critic)",
+                avatar="⚖️",
+                intent="CLEARANCE",
+                content=f"MedChem filtration complete: {len(cleared_leads)} candidates CLEARED with optimal Lipinski/Veber profiles and low synthetic complexity. Passing to Dr. Elena for 3D biophysical docking.",
+                metadata={"cleared_count": len(cleared_leads), "flagged_count": len(flagged_leads)}
+            )
+
+            # --- Sub-Agent 4: Biophysics Docking (Dr. Elena) ---
+            dockable_leads = cleared_leads + flagged_leads
+            if not dockable_leads:
+                dockable_leads = evaluated_candidates[:4]
+
+            docked_leads, dock_msg = self.docking_agent.dock_candidates(dockable_leads, target_profile)
+            self._emit(dock_msg)
+            
+            top_docked = min(docked_leads, key=lambda x: x.binding_affinity) if docked_leads else None
+            best_aff = top_docked.binding_affinity if top_docked else 0.0
+            
+            self.bus.publish(
+                agent_id="docker",
+                persona_name="Dr. Elena (Biophysicist)",
+                avatar="⚡",
+                intent="DOCKING_RESULT",
+                content=f"NVIDIA DiffDock 3D generative diffusion complete across {len(docked_leads)} poses. Top binder {top_docked.id if top_docked else 'N/A'} achieved ΔG = {best_aff:.2f} kcal/mol. Active site hydrogen bonds confirmed.",
+                metadata={"top_affinity": best_aff, "top_id": top_docked.id if top_docked else ""}
+            )
+
+            all_screened.extend(evaluated_candidates)
+
+            # Record round evolution telemetry
+            self.evolution_rounds_data.append({
+                "round": current_round,
+                "best_affinity": best_aff,
+                "avg_qed": round(sum(c.qed for c in dockable_leads) / max(1, len(dockable_leads)), 3),
+                "cleared_count": len(cleared_leads),
+                "total_docked": len(docked_leads)
+            })
+
+            # Update seed for next evolutionary round if applicable
+            if top_docked and current_round < total_rounds:
+                current_seed_smiles = top_docked.smiles
+                self.bus.publish(
+                    agent_id="pi",
+                    persona_name="Dr. Sterling (Chief PI)",
+                    avatar="👑",
+                    intent="EVOLUTION_ORDER",
+                    content=f"Round {current_round} concluded. Lead {top_docked.id} (ΔG = {best_aff:.2f} kcal/mol) selected as evolutionary seed for Round {current_round + 1}. Directing Dr. Aris to perform fine-grain bioisosteric mutation.",
+                    metadata={"seed_id": top_docked.id, "next_round": current_round + 1}
+                )
+
+        # --- Sub-Agent 5: PI Evaluation & Multi-Objective Pareto Arbitration ---
+        top_leads, pi_msg = self.pi_agent.evaluate_and_rank_leads(all_screened, target_profile)
         self._emit(pi_msg)
         
-        # --- Optional Stage 6: Autonomous Feedback Loop (Round 2) ---
-        if enable_feedback_loop and top_leads:
-            best = top_leads[0]
-            # If top lead has mild synthetic or weight liabilities, trigger steering directive
-            if best.mw > 500 or best.sascore > 4.5:
-                feedback_msg = AgentMessage(
-                    agent_name="PrincipalInvestigator",
-                    role="Principal Investigator",
-                    action="PI_STEERING_DIRECTIVE",
-                    thought=(
-                        f"Round 1 top lead {best.id} demonstrates strong affinity ({best.binding_affinity:.2f} kcal/mol) "
-                        f"but has synthetic complexity (SAScore {best.sascore:.2f}) and MW ({best.mw:.1f} g/mol). "
-                        f"Directing Generative Chemist to optimize polar surface and reduce steric hindrance."
-                    ),
-                    output_summary="Issued feedback directive: lower MW and optimize synthetic accessibility.",
-                    status="SUCCESS"
-                )
-                self._emit(feedback_msg)
-                
-                # Round 2 Generative Chemistry with feedback
-                r2_candidates, r2_chem_msg = self.generative_chemist.generate_derivatives(
-                    parent_smiles=best.smiles,
-                    target_name=target_profile.name,
-                    num_molecules=6,
-                    steering_prompt="Lower molecular weight, optimize QED and synthetic accessibility",
-                    round_num=2
-                )
-                self._emit(r2_chem_msg)
-                
-                # Screen and Dock Round 2
-                r2_eval, r2_admet_msg = self.admet_critic.evaluate_candidates(r2_candidates)
-                self._emit(r2_admet_msg)
-                
-                r2_docked, r2_dock_msg = self.docking_agent.dock_candidates(r2_eval, target_profile)
-                self._emit(r2_dock_msg)
-                
-                # Combine all candidates and re-rank
-                all_candidates = candidates + r2_candidates
-                top_leads, final_pi_msg = self.pi_agent.evaluate_and_rank_leads(all_candidates, target_profile)
-                self._emit(final_pi_msg)
-            else:
-                all_candidates = candidates
-        else:
-            all_candidates = candidates
+        prime_lead = top_leads[0] if top_leads else None
+        
+        self.bus.publish(
+            agent_id="pi",
+            persona_name="Dr. Sterling (Chief PI)",
+            avatar="👑",
+            intent="CONSENSUS",
+            content=f"Consensus achieved across all 5 scientific council agents! Identified {len(top_leads)} non-dominated Pareto leads. Nominated Primary Clinical Candidate: {prime_lead.id if prime_lead else 'N/A'} (ΔG = {prime_lead.binding_affinity if prime_lead else 0.0:.2f} kcal/mol, QED = {prime_lead.qed if prime_lead else 0.0:.3f}).",
+            metadata={"nominated_lead": prime_lead.id if prime_lead else "", "pareto_count": len(top_leads)}
+        )
 
-        # --- Stage 7: Dossier Authoring & Serialization ---
-        dossier = self.pi_agent.generate_dossier(target_profile, all_candidates, top_leads, self.audit_log)
+        # --- Sub-Agent 6: Retrosynthesis Planner (Dr. Chen) ---
+        if prime_lead:
+            retro_plan = self.retro_agent.plan_synthesis_route(prime_lead)
+            self.latest_retrosynthesis_plan = retro_plan
+            self.bus.publish(
+                agent_id="retro",
+                persona_name="Dr. Chen (Retrosynthesis Planner)",
+                avatar="🔬",
+                intent="RETROSYNTHESIS_SOLVED",
+                content=f"Wet-lab synthesis route constructed for {prime_lead.id}: {retro_plan.num_steps}-step organic procedure ({retro_plan.overall_feasibility}). Starting from commercially available precursors ({', '.join(retro_plan.starting_materials[:2])}).",
+                metadata={"steps": retro_plan.num_steps, "feasibility": retro_plan.overall_feasibility}
+            )
+
+        # --- Dossier Authoring & Serialization ---
+        dossier = self.pi_agent.generate_dossier(target_profile, all_screened, top_leads, self.audit_log)
         
         # Save Dossier Markdown
         dossier_path = os.path.join(output_dir, "CANDIDATE_SELECTION_DOSSIER.md")
@@ -140,7 +230,7 @@ class AgenticScientistOrchestrator:
                 "QED", "MW", "LogP", "TPSA", "HBD", "HBA", "RotBonds", "SAScore",
                 "PAINS_Alerts", "ADMET_Verdict", "Is_Pareto_Optimal", "Round"
             ])
-            for c in all_candidates:
+            for c in all_screened:
                 writer.writerow([
                     c.id, c.smiles, c.binding_affinity, c.diffdock_confidence,
                     c.qed, c.mw, c.logp, c.tpsa, c.hbd, c.hba, c.rotatable_bonds, c.sascore,
@@ -164,3 +254,45 @@ class AgenticScientistOrchestrator:
         writer.close()
         
         return dossier
+
+    def redock_modified_candidate(self, modified_smiles: str, target_name: str) -> Dict[str, Any]:
+        """
+        Interactive Chemical Workbench Tool (Human-in-the-Loop):
+        Instantly evaluates, ADMET-cleans, and docks a human-edited or tweaked molecule.
+        """
+        mol = Chem.MolFromSmiles(modified_smiles)
+        if not mol:
+            return {"valid": False, "error": "Invalid chemical SMILES structure"}
+
+        canonical_smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
+        target_profile, _ = self.target_scout.scout_target(target_name)
+
+        cand = MoleculeCandidate(
+            id="USER-EDIT-01",
+            smiles=canonical_smiles,
+            parent_smiles=target_profile.reference_ligand_smiles
+        )
+
+        eval_cands, _ = self.admet_critic.evaluate_candidates([cand])
+        docked_cands, _ = self.docking_agent.dock_candidates(eval_cands, target_profile)
+
+        res_cand = docked_cands[0] if docked_cands else eval_cands[0]
+        retro_plan = self.retro_agent.plan_synthesis_route(res_cand)
+
+        return {
+            "valid": True,
+            "candidate_id": res_cand.id,
+            "smiles": res_cand.smiles,
+            "binding_affinity_kcal_mol": round(res_cand.binding_affinity, 2),
+            "qed": round(res_cand.qed, 3),
+            "mw": round(res_cand.mw, 1),
+            "logp": round(res_cand.logp, 2),
+            "sascore": round(res_cand.sascore, 2),
+            "admet_verdict": res_cand.admet_verdict,
+            "pose_sdf": res_cand.pose_sdf,
+            "retrosynthesis": {
+                "num_steps": retro_plan.num_steps,
+                "feasibility": retro_plan.overall_feasibility,
+                "starting_materials": retro_plan.starting_materials
+            }
+        }

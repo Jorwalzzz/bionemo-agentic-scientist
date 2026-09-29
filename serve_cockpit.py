@@ -193,14 +193,48 @@ def trigger_run(request: Request, target: str = Query("KRAS G12D"), candidates: 
         target_query=target, num_candidates=safe_candidates, output_dir=RESULTS_DIR
     )
 
+    # Assemble Retrosynthesis Data
+    retro_data = {}
+    if orchestrator.latest_retrosynthesis_plan:
+        rp = orchestrator.latest_retrosynthesis_plan
+        retro_data = {
+            "num_steps": rp.num_steps,
+            "feasibility": rp.overall_feasibility,
+            "starting_materials": rp.starting_materials,
+            "steps": [
+                {
+                    "step": s.step_number,
+                    "reaction_type": s.reaction_type,
+                    "reactants": s.reactants,
+                    "reagents": s.reagents,
+                    "yield_pct": s.estimated_yield_pct,
+                    "difficulty": s.difficulty
+                }
+                for s in rp.steps
+            ]
+        }
+
+    # Assemble Council Dialogues
+    council_summary = orchestrator.bus.get_council_summary()
+
     result = {
         "status": "completed",
         "trial_status": trial_info,
         "target": dossier.target.name,
+        "pdb_id": dossier.target.pdb_id,
+        "residue_count": len(dossier.target.canonical_sequence),
         "nominated_lead": dossier.top_leads[0].id if dossier.top_leads else "None",
         "binding_affinity": dossier.top_leads[0].binding_affinity if dossier.top_leads else 0.0,
         "screened": dossier.screened_count,
         "pareto_count": dossier.pareto_leads_count,
+        "council_dialogues": council_summary["recent_dialogues"],
+        "council_stats": {
+            "total_messages": council_summary["total_messages"],
+            "veto_count": council_summary["veto_count"],
+            "clearance_count": council_summary["clearance_count"]
+        },
+        "evolution_rounds": orchestrator.evolution_rounds_data,
+        "retrosynthesis": retro_data,
         "leads": [
             {
                 "id": lead.id,
@@ -220,6 +254,54 @@ def trigger_run(request: Request, target: str = Query("KRAS G12D"), candidates: 
     resp = JSONResponse(result)
     resp.set_cookie(key=COOKIE_NAME, value=signed_token, max_age=86400 * 365, httponly=True, samesite="lax")
     return resp
+
+
+
+
+@app.post("/api/target/fetch")
+async def api_fetch_target(request: Request):
+    """Universal Target Ingestion: fetches any RCSB PDB code or resolves query."""
+    try:
+        body = await request.json()
+        query = body.get("target", "KRAS G12D")
+    except Exception:
+        query = "KRAS G12D"
+
+    from src.target_scout import TargetScoutAgent
+    scout = TargetScoutAgent()
+    profile, msg = scout.scout_target(query)
+
+    return {
+        "success": True,
+        "name": profile.name,
+        "gene": profile.gene,
+        "pdb_id": profile.pdb_id,
+        "uniprot_id": profile.uniprot_id,
+        "description": profile.description,
+        "residue_count": len(profile.canonical_sequence),
+        "sequence_preview": profile.canonical_sequence[:45] + "...",
+        "pocket_residues": profile.pocket_residues,
+        "reference_ligand": profile.reference_ligand_name,
+        "pocket_coords": profile.target_pocket_coords
+    }
+
+
+@app.post("/api/redock")
+async def api_redock(request: Request):
+    """Interactive Chemical Workbench: Re-docks a human-edited molecule in real-time."""
+    try:
+        body = await request.json()
+        modified_smiles = body.get("smiles", "")
+        target_name = body.get("target", "KRAS G12D")
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": f"Invalid request body: {str(e)}"})
+
+    api_key = os.getenv("NVIDIA_API_KEY", "").strip()
+    use_mock = os.getenv("USE_MOCK", "false").lower() == "true" or not api_key
+    orchestrator = AgenticScientistOrchestrator(api_key=api_key, mock=use_mock)
+    
+    redock_result = orchestrator.redock_modified_candidate(modified_smiles, target_name)
+    return redock_result
 
 
 if __name__ == "__main__":

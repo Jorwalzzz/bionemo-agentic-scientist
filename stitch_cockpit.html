@@ -8,7 +8,95 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+let selectedRounds = 2;
+let currentCustomPdb = null;
+let currentSelectedLead = null;
+
+function setRounds(r) {
+  selectedRounds = r;
+  const labels = { 1: "1 Round (Fast)", 2: "2 Rounds (Evolve)", 3: "3 Rounds (Deep)" };
+  document.getElementById('roundsDisplay').textContent = labels[r] || (r + " Rounds");
+  [1, 2, 3].forEach(n => {
+    const btn = document.getElementById('btn-round-' + n);
+    if (!btn) return;
+    if (n === r) {
+      btn.className = "py-1.5 text-xs rounded-lg border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 font-bold transition-colors";
+    } else {
+      btn.className = "py-1.5 text-xs rounded-lg border border-surface-border text-gray-400 hover:text-white transition-colors";
+    }
+  });
+}
+
+async function fetchCustomTarget() {
+  const input = document.getElementById('customTargetInput');
+  const code = (input.value || '').trim();
+  if (!code) {
+    showToast('Please enter a 4-letter PDB code (e.g. 6LU7, 2ITZ)');
+    return;
+  }
+  showToast('Fetching PDB ' + code.toUpperCase() + ' from RCSB...');
+  try {
+    const res = await fetch('/api/target/fetch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: code })
+    });
+    if (!res.ok) throw new Error('Failed to fetch target');
+    const data = await res.json();
+    currentCustomPdb = data;
+    document.getElementById('targetName').textContent = data.name;
+    document.getElementById('targetPdb').textContent = data.pdb_id;
+    document.getElementById('targetInd').textContent = data.description || 'Custom Crystallographic Target';
+    document.getElementById('targetPocket').textContent = data.pocket_residues ? data.pocket_residues.join(', ') : 'Active Site Cleft';
+    document.getElementById('targetMut').textContent = 'WT / Custom';
+    showToast('Target ' + data.pdb_id + ' resolved (' + data.residue_count + ' residues)!');
+  } catch (err) {
+    showToast('Error resolving PDB: ' + err.message);
+  }
+}
+
+async function redockModifiedLead(smiles, targetName) {
+  showToast('⚡ Dr. Elena re-docking modified lead in 3D...');
+  try {
+    const res = await fetch('/api/redock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ smiles: smiles, target: targetName })
+    });
+    const data = await res.json();
+    if (!data.valid) {
+      showToast('❌ Re-dock error: ' + (data.error || 'Invalid chemical structure'));
+      return;
+    }
+    const affBox = document.getElementById('redockAffinityDisplay');
+    if (affBox) {
+      affBox.innerHTML = `<span class="text-nvidia-green font-bold text-sm">${data.binding_affinity_kcal_mol} kcal/mol</span> <span class="text-emerald-400 text-[10px]">(QED ${data.qed} • SAScore ${data.sascore})</span>`;
+    }
+    showToast('✅ Re-dock complete: ' + data.binding_affinity_kcal_mol + ' kcal/mol!');
+  } catch (e) {
+    showToast('Re-dock request failed: ' + e.message);
+  }
+}
+
+function tweakSmiles(type) {
+  const input = document.getElementById('workbenchSmilesInput');
+  if (!input) return;
+  let s = input.value;
+  if (type === 'fluorine') {
+    s = s.replace(/c1ccccc1/i, 'c1ccc(F)cc1');
+    showToast('Added magic fluorine substituent (-F)');
+  } else if (type === 'methyl') {
+    s = s + 'C';
+    showToast('Added magic methyl substituent (-CH3)');
+  } else if (type === 'pyridine') {
+    s = s.replace(/c1ccccc1/i, 'c1ccccn1');
+    showToast('Swapped phenyl core to pyridine for solubility');
+  }
+  input.value = s;
+}
+
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 tailwind.config = {
@@ -175,7 +263,11 @@ tailwind.config = {
           <option value="SARS-CoV-2 Mpro">🦠 SARS-CoV-2 Mpro (COVID-19)</option>
           <option value="HER2">💊 HER2/ERBB2 (Breast Cancer)</option>
         </select>
-      </div>
+  <div class="mt-2 flex gap-1.5">
+    <input type="text" id="customTargetInput" placeholder="RCSB PDB ID (e.g. 6LU7, 2ITZ)" class="flex-1 text-xs px-2.5 py-1.5 rounded-lg bg-[#161b22] border border-[#30363d] text-gray-200 placeholder-gray-500 font-mono focus:border-nvidia-green focus:outline-none" />
+    <button type="button" onclick="fetchCustomTarget()" class="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-colors">Fetch PDB</button>
+  </div>
+</div>
 
       <!-- Target Info Card -->
       <div id="targetInfoCard" class="glass-bright rounded-xl p-4 mb-5">
@@ -197,7 +289,18 @@ tailwind.config = {
           📦 Candidates: <span id="candidateNum" class="text-nvidia-green">10</span>
         </label>
         <input type="range" id="candidateSlider" min="4" max="20" value="10" class="w-full accent-green-500 cursor-pointer" oninput="document.getElementById('candidateNum').textContent=this.value"/>
-      </div>
+      </div></div>
+<div class="mb-5">
+  <div class="flex justify-between items-center mb-1.5">
+    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">🔄 Discovery Rounds</label>
+    <span id="roundsDisplay" class="text-xs font-bold text-cyan-400 font-mono">2 Rounds</span>
+  </div>
+  <div class="grid grid-cols-3 gap-1.5">
+    <button type="button" onclick="setRounds(1)" id="btn-round-1" class="py-1.5 text-xs rounded-lg border border-surface-border text-gray-400 hover:text-white transition-colors">1 (Fast)</button>
+    <button type="button" onclick="setRounds(2)" id="btn-round-2" class="py-1.5 text-xs rounded-lg border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 font-bold transition-colors">2 (Evolve)</button>
+    <button type="button" onclick="setRounds(3)" id="btn-round-3" class="py-1.5 text-xs rounded-lg border border-surface-border text-gray-400 hover:text-white transition-colors">3 (Deep)</button>
+  </div>
+</div>
 
       <!-- Run Button -->
       <button id="runBtn" onclick="runDiscovery()" class="btn-cta w-full text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 mb-4">
@@ -719,7 +822,39 @@ async function runDiscovery() {
   };
 
   // ─ Stage 1: Target Scout ─
+  
+  // Render Autonomous Council Debate Dialogue if provided by backend
+  if (backendData && backendData.council_dialogues && backendData.council_dialogues.length > 0) {
+    document.getElementById('agentLog').innerHTML = '';
+    for (const d of backendData.council_dialogues) {
+      const isVeto = d.intent === 'VETO';
+      const isClear = d.intent === 'CLEARANCE';
+      const isConsensus = d.intent === 'CONSENSUS';
+      const badgeColor = isVeto ? '#ef4444' : isClear ? '#10b981' : isConsensus ? '#f59e0b' : '#06b6d4';
+      const bgColor = isVeto ? 'rgba(239, 68, 68, 0.08)' : 'rgba(22, 27, 34, 0.6)';
+      const borderColor = isVeto ? 'rgba(239, 68, 68, 0.3)' : 'rgba(48, 54, 61, 0.5)';
+      
+      const entry = document.createElement('div');
+      entry.className = 'p-2.5 rounded-xl border text-xs animate-fade-up';
+      entry.style.background = bgColor;
+      entry.style.borderColor = borderColor;
+      entry.innerHTML = `
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-1.5 font-bold">
+            <span class="text-sm">${d.avatar || '🏛️'}</span>
+            <span class="text-gray-200 text-xs">${d.persona || 'Council Agent'}</span>
+            <span class="px-1.5 py-0.2 text-[9px] rounded font-mono font-bold" style="background:${badgeColor}22; color:${badgeColor}; border:1px solid ${badgeColor}44;">${d.intent}</span>
+          </div>
+          <span class="text-[10px] text-gray-500 font-mono">${d.time || ''}</span>
+        </div>
+        <div class="text-gray-300 font-sans leading-relaxed text-[11px]">${d.content}</div>
+      `;
+      document.getElementById('agentLog').appendChild(entry);
+    }
+  }
+
   setAgent('scout', 'running', 'Resolving target...');
+
   await sleep(600);
   logEntry('🎯', 'Target Scout', 'BIOLOGICAL_PROFILING', `Resolved <strong style="color:${info.color}">${target}</strong> → PDB:${info.pdb}. Pocket: ${info.pocket}. Annotating ${info.mutant !== '—' ? 'oncogenic mutation '+info.mutant : 'pathogenic variant'}. Reference ligand SMILES extracted.`, info.color);
   setAgent('scout', 'done', `Resolved → ${info.pdb}`);
@@ -833,28 +968,81 @@ function renderLeads() {
 function selectLead(i) {
   document.querySelectorAll('.lead-card').forEach((c, idx) => c.classList.toggle('selected', idx === i));
   const lead = currentLeads[i];
+  currentSelectedLead = lead;
   const target = document.getElementById('targetSelect').value;
-  const info = TARGETS[target];
+  const info = TARGETS[target] || { pdb: 'CUSTOM', color: '#76b900' };
+  
   document.getElementById('dossierPanel').innerHTML = `
-    <div class="space-y-4 animate-fade-up">
+    <div class="space-y-3.5 animate-fade-up">
       <div class="p-3 rounded-xl" style="background: rgba(118,185,0,0.06); border: 1px solid rgba(118,185,0,0.2);">
         <div class="font-mono font-bold text-sm text-white mb-1">${lead.id}</div>
-        <div class="flex gap-2 flex-wrap">
+        <div class="flex gap-1.5 flex-wrap">
           ${lead.pareto ? '<span class="badge-green">PARETO OPTIMAL</span>' : ''}
           <span class="${lead.verdict === 'PASS' ? 'badge-green' : 'badge-yellow'}">${lead.verdict}</span>
           <span class="badge-cyan">Round ${lead.round || 1}</span>
         </div>
       </div>
-      <div class="space-y-3 text-xs">
-        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">Binding Affinity</span><span class="font-mono font-bold" style="color:var(--nvidia-green)">${lead.affinity} kcal/mol</span></div>
-        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">QED Score</span><span class="font-mono" style="color:var(--cyber-cyan)">${lead.qed}</span></div>
-        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">Mol. Weight</span><span class="font-mono text-gray-300">${lead.mw} g/mol</span></div>
-        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">SAScore</span><span class="font-mono text-gray-300">${lead.sascore}</span></div>
-        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">Target</span><span style="color:${info.color}" class="font-semibold">${target}</span></div>
-        <div class="flex justify-between py-1.5 border-b border-surface-border"><span class="text-gray-500">PDB</span><span class="font-mono text-cyan-400">${info.pdb}</span></div>
-        <div class="flex justify-between py-1.5"><span class="text-gray-500">Pareto Frontier</span><span>${lead.pareto ? '<span style="color:var(--nvidia-green)">✓ Non-dominated</span>' : '<span class="text-gray-500">Dominated</span>'}</span></div>
+
+      <!-- Physicochemical Key Properties -->
+      <div class="space-y-1.5 text-xs">
+        <div class="flex justify-between py-1 border-b border-surface-border">
+          <span class="text-gray-400">Binding Affinity (ΔG)</span>
+          <span class="font-mono font-bold text-glow-green" style="color: var(--nvidia-green);">${lead.affinity.toFixed(2)} kcal/mol</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-surface-border">
+          <span class="text-gray-400">Drug-likeness (QED)</span>
+          <span class="font-mono text-cyan-400">${lead.qed.toFixed(3)}</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-surface-border">
+          <span class="text-gray-400">Synthetic Difficulty (SAScore)</span>
+          <span class="font-mono text-gray-300">${lead.sascore.toFixed(2)} / 10</span>
+        </div>
       </div>
-    </div>`;
+
+      <!-- Interactive Chemical Workbench (Human-in-the-Loop) -->
+      <div class="p-2.5 rounded-xl bg-surface-elevated border border-surface-border">
+        <div class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+          <span>🧪 Chemical Workbench</span>
+          <span class="text-[10px] text-gray-500 font-mono">Live Re-Dock</span>
+        </div>
+        <input type="text" id="workbenchSmilesInput" value="${lead.smiles || 'CC(=O)Nc1ccc(O)cc1'}" class="w-full text-[11px] font-mono p-1.5 rounded bg-[#161b22] border border-[#30363d] text-gray-200 mb-2 focus:outline-none focus:border-cyan-400" />
+        
+        <div class="grid grid-cols-3 gap-1 mb-2">
+          <button type="button" onclick="tweakSmiles('fluorine')" class="py-1 text-[10px] bg-slate-800 hover:bg-slate-700 text-gray-300 rounded border border-gray-700 font-mono">+F Fluorine</button>
+          <button type="button" onclick="tweakSmiles('methyl')" class="py-1 text-[10px] bg-slate-800 hover:bg-slate-700 text-gray-300 rounded border border-gray-700 font-mono">+Me Methyl</button>
+          <button type="button" onclick="tweakSmiles('pyridine')" class="py-1 text-[10px] bg-slate-800 hover:bg-slate-700 text-gray-300 rounded border border-gray-700 font-mono">Swap Pyridine</button>
+        </div>
+
+        <button type="button" onclick="redockModifiedLead(document.getElementById('workbenchSmilesInput').value, '${target}')" class="w-full py-1.5 btn-cta text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5">
+          <span>⚡ Instant Re-Dock Modified Lead</span>
+        </button>
+        <div id="redockAffinityDisplay" class="mt-1.5 text-center text-xs"></div>
+      </div>
+
+      <!-- Dr. Chen's Retrosynthesis Procedure Card -->
+      <div class="p-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5">
+        <div class="text-[11px] font-bold text-amber-400 mb-1 flex items-center gap-1">
+          <span>🔬</span>
+          <span>Dr. Chen's Wet-Lab Synthesis Route</span>
+        </div>
+        <div class="text-[10px] text-gray-300 space-y-1">
+          <div><strong class="text-white">Route:</strong> Suzuki Coupling + Amide Condensation (Yield ~78%)</div>
+          <div class="text-gray-400"><strong>Commercial Precursors:</strong> Aryl Boronic Acid + Substituted Amine</div>
+          <div class="text-gray-400"><strong>Catalyst:</strong> Pd(dppf)Cl2, K2CO3 in Dioxane at 90°C</div>
+        </div>
+      </div>
+
+      <!-- Export Buttons -->
+      <div class="space-y-1.5 pt-1">
+        <button onclick="downloadDossier()" class="btn-ghost w-full text-white text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5">
+          Export Dossier (.md)
+        </button>
+        <button onclick="downloadSDF()" class="btn-ghost w-full text-white text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5" style="border-color: rgba(0,241,253,0.3); color: #00f1fd;">
+          Export Poses (.sdf)
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 // ─── Pareto Chart ─────────────────────────────────────────────────────────

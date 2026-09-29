@@ -69,3 +69,45 @@ class DossierReport:
     executive_summary: str
     agent_audit_log: List[AgentMessage]
     timestamp: str = ""
+
+@dataclass
+class CouncilMessage:
+    agent_id: str                       # "scout", "chemist", "critic", "docker", "retro", "pi", "user"
+    persona_name: str                   # e.g., "Dr. Marcus (MedChem Critic)"
+    avatar: str                         # "⚖️", "🧪", "🎯", "⚡", "🔬", "👑", "👨‍🔬"
+    intent: str                         # "PROPOSAL", "VETO", "COUNTER_PROPOSAL", "CLEARANCE", "DOCKING_RESULT", "CONSENSUS", "USER_DIRECTIVE"
+    content: str                        # Rich scientific dialogue
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    timestamp: float = field(default_factory=time.time)
+    timestamp_str: str = ""
+
+@dataclass
+class RetrosynthesisStep:
+    step_number: int
+    reaction_type: str                  # e.g. "Suzuki-Miyaura Coupling", "Amide Condensation"
+    reaction_smarts: str
+    reactants: List[Dict[str, str]]     # [{"name": "...", "smiles": "...", "cas": "..."}]
+    reagents: List[str]                 # ["HATU", "DIPEA", "DMF", "rt, 2h"]
+    product_smiles: str
+    estimated_yield_pct: float
+    difficulty: str                     # "Routine (★☆☆)", "Moderate (★★☆)", "Challenging (★★★)"
+
+@dataclass
+class RetrosynthesisPlan:
+    candidate_id: str
+    target_smiles: str
+    num_steps: int
+    overall_feasibility: str            # "Commercially Accessible (1-2 steps)", "Custom Multi-Step"
+    steps: List[RetrosynthesisStep] = field(default_factory=list)
+    starting_materials: List[str] = field(default_factory=list)
+    estimated_turnaround_days: int = 7
+
+@dataclass
+class SafetyRadarScore:
+    candidate_id: str
+    binding_potency_pct: float          # 0-100 scale
+    drug_likeness_qed_pct: float        # 0-100 scale
+    synthetic_feasibility_pct: float    # 0-100 scale
+    cns_bbb_permeability_pct: float     # 0-100 scale
+    cardiac_herg_safety_pct: float      # 0-100 scale
+    clinical_selectivity_pct: float     # 0-100 scale
