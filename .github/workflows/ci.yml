@@ -1,4 +1,4 @@
-name: BioNeMo Agentic Scientist CI
+name: BioNeMo Benchmark CI
 
 on:
   push:
@@ -8,43 +8,33 @@ on:
 
 jobs:
   test:
-    name: Test on Python ${{ matrix.python-version }}
+    name: Pytest & Mock Inference Suite
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
+          cache: "pip"
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install fastapi uvicorn
 
       - name: Run Pytest Test Suite
         run: |
-          pytest tests/ -v
+          pytest -v
 
-      - name: Run Comprehensive Fuzz & Stress Validation
+      - name: Execute End-to-End Mock Benchmark & Chart Generation
         run: |
-          python tests/comprehensive_fuzz_loop.py
+          python run_benchmark.py --mock --save-plots --iterations 1
 
-      - name: Verify CLI Campaign on KRAS G12D
+      - name: Verify Generated Artifacts
         run: |
-          python run_agentic_scientist.py --target "KRAS G12D" --candidates 4
-
-      - name: Verify CLI Campaign on SARS-CoV-2 Mpro
-        run: |
-          python run_agentic_scientist.py --target "SARS-CoV-2 Mpro" --candidates 4
-
-      - name: Verify CLI Campaign on HER2
-        run: |
-          python run_agentic_scientist.py --target "HER2" --candidates 4
+          test -f results/benchmark_summary.csv
+          test -f results/throughput_comparison.png
+          test -f results/latency_vs_length.png
