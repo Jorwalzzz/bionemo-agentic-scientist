@@ -526,6 +526,7 @@ tailwind.config = {
         <button class="tab-btn active" onclick="switchTab('windows')" id="tab-windows">🪟 Windows</button>
         <button class="tab-btn" onclick="switchTab('unix')" id="tab-unix">🍎 macOS / Linux</button>
         <button class="tab-btn" onclick="switchTab('docker')" id="tab-docker">🐳 Docker</button>
+        <button class="tab-btn" onclick="switchTab('key')" id="tab-key">🔑 Free NVIDIA Key</button>
         <button class="tab-btn" onclick="switchTab('compare')" id="tab-compare">⚖️ Trial vs Full</button>
       </div>
     </div>
@@ -587,6 +588,49 @@ tailwind.config = {
         </div>
         <div class="mt-4 p-3 rounded-xl text-xs" style="background: rgba(0,241,253,0.05); border: 1px solid rgba(0,241,253,0.2);">
           <span style="color: var(--cyber-cyan);">💡 Pro tip:</span> <span class="text-gray-400">Set <code class="font-mono" style="color: var(--nvidia-green);">NVIDIA_API_KEY</code> in <code>.env</code> before running to enable live GPU inference via NVIDIA NIM cloud endpoints.</span>
+        </div>
+      </div>
+
+      <!-- Free NVIDIA Key Guide Tab -->
+      <div id="pane-key" class="hidden">
+        <div class="rounded-xl p-4 mb-4" style="background: linear-gradient(135deg, rgba(118,185,0,0.1), rgba(0,241,253,0.06)); border: 1px solid rgba(118,185,0,0.3);">
+          <div class="text-sm font-bold text-gray-200 mb-1 flex items-center gap-2">
+            <span>⚡</span>
+            <span>How to Claim 1,000 Free NVIDIA NIM GPU Credits</span>
+          </div>
+          <p class="text-xs text-gray-400 leading-relaxed">
+            NVIDIA provides <strong>1,000 free inference credits</strong> to all developers for testing hosted biological foundation models (MolMIM, DiffDock, ESM-2). No credit card required!
+          </p>
+        </div>
+
+        <ol class="space-y-3 text-xs text-gray-300 mb-4">
+          <li class="flex items-start gap-2.5">
+            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[11px] border border-emerald-500/30">1</span>
+            <div>
+              <div class="font-semibold text-gray-200">Sign Up at build.nvidia.com</div>
+              <div class="text-gray-400 mt-0.5">Visit <a href="https://build.nvidia.com" target="_blank" class="text-nvidia-green hover:underline font-mono">https://build.nvidia.com</a> and sign in with Google, GitHub, or Email.</div>
+            </div>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[11px] border border-emerald-500/30">2</span>
+            <div>
+              <div class="font-semibold text-gray-200">Generate an API Key</div>
+              <div class="text-gray-400 mt-0.5">Navigate to any BioNeMo NIM (<strong class="text-gray-200">MolMIM</strong> or <strong class="text-gray-200">DiffDock</strong>) and click the green <strong class="text-emerald-400 font-mono">"Get API Key"</strong> button. Your key starts with <code class="font-mono text-nvidia-green">nvapi-...</code>.</div>
+            </div>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[11px] border border-emerald-500/30">3</span>
+            <div>
+              <div class="font-semibold text-gray-200">Paste into your .env File</div>
+              <div class="text-gray-400 mt-0.5">Open the <code class="font-mono text-gray-300">.env</code> file in your downloaded project folder and set:</div>
+              <div class="code-box mt-1.5 font-mono text-[11px] text-nvidia-green">NVIDIA_API_KEY=nvapi-your-key-here<br/>USE_MOCK=false</div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="p-3 rounded-lg text-xs" style="background: rgba(33,38,45,0.6); border: 1px solid #30363d;">
+          <span class="text-amber-400 font-semibold">💡 Zero Credits? No Problem!</span>
+          <p class="text-gray-400 mt-0.5">Agentic BioNeMo automatically falls back to high-fidelity offline medchem simulation mode if no API key is provided. You can run 100% unlimited campaigns locally without paying a single cent.</p>
         </div>
       </div>
 

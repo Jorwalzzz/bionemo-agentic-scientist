@@ -58,6 +58,24 @@ Then open [http://localhost:8000](http://localhost:8000).
 
 ---
 
+
+---
+
+## 🔑 Obtaining Your Free NVIDIA API Key (1,000 Free Credits)
+
+To run live GPU inference against NVIDIA's hosted foundation models (MolMIM, DiffDock, ESM-2), claim your **1,000 free credits**:
+
+1. **Sign Up**: Visit [build.nvidia.com](https://build.nvidia.com) and click **Sign In** (free with Google, GitHub, or Email).
+2. **Generate API Key**: Navigate to any biological NIM (e.g. [MolMIM](https://build.nvidia.com/nvidia/molmim) or [DiffDock](https://build.nvidia.com/mit/diffdock)) and click **"Get API Key"**. Your key starts with `nvapi-...`.
+3. **Configure Locally**: Open the `.env` file in the project folder and paste your key:
+   ```bash
+   NVIDIA_API_KEY=nvapi-your-key-here
+   USE_MOCK=false
+   ```
+
+> [!TIP]
+> **Zero Credits or Offline?** Agentic BioNeMo automatically operates in high-fidelity offline simulation mode if no API key is set. You can run 100% unlimited discovery campaigns locally without ever spending a cent.
+
 ## 🌟 Highlights
 
 - **Universal Target Ingestion**: Fetch and clean any crystallographic structure live from the **RCSB Protein Data Bank** using its 4-letter PDB ID (e.g. `6LU7`, `2ITZ`, `8AZV`, `7BQY`) or select curated clinical oncology targets (**KRAS G12D**, **EGFR T790M**, **SARS-CoV-2 Mpro**, **HER2**).
